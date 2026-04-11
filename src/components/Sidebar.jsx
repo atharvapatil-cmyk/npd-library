@@ -1,126 +1,115 @@
-import { useState } from 'react';
-import { FOLDER_TREE, ROLE_META, canView } from '../data/data';
+import { FOLDER_TREE, canView } from '../data/data.js';
 
-export default function Sidebar({ user, currentFolderId, onFolderClick, onHomeClick, files, onSettingsClick, activePage }) {
-  const [collapsed, setCollapsed] = useState({});
-
-  const toggleSection = (id) => setCollapsed(p => ({ ...p, [id]: !p[id] }));
-
-  const fileCountForFolder = (fid) => files.filter(f => f.folderId === fid).length;
+export default function Sidebar({
+  open, currentUser, accessMatrix, activeSection, activeFolder,
+  view, onNavigate, onViewChange, onLogout
+}) {
+  const isAdmin = currentUser.role === 'admin';
 
   return (
-    <aside style={{
-      position:'fixed', top:'var(--header-height)', left:0,
-      width:'var(--sidebar-width)', height:'calc(100vh - var(--header-height))',
-      background:'var(--bg-card)', borderRight:'1px solid var(--border)',
-      display:'flex', flexDirection:'column', zIndex:50, overflowY:'auto',
-    }}>
-      {/* Home */}
-      <div style={{ padding:'12px 8px 8px' }}>
-        <button
-          onClick={onHomeClick}
-          className={`sidebar-item ${!currentFolderId && activePage === 'library' ? 'active' : ''}`}
-          style={{
-            width:'100%', display:'flex', alignItems:'center', gap:10, padding:'9px 12px',
-            borderRadius:10, cursor:'pointer', background:'none', border:'none', textAlign:'left',
-          }}
-        >
-          <span style={{ fontSize:16 }}>ð </span>
-          <span style={{ fontSize:13, fontWeight:600, color:'var(--text-primary)' }}>Dashboard</span>
-        </button>
-      </div>
-
-      {/* Divider */}
-      <div style={{ height:1, background:'var(--border)', margin:'4px 12px' }} />
-
-      {/* Folder tree */}
-      <div style={{ flex:1, padding:'8px 8px' }}>
-        <div style={{ fontSize:10, fontWeight:700, color:'var(--text-muted)', letterSpacing:'.8px', padding:'4px 12px 8px', textTransform:'uppercase' }}>Sections</div>
-
-        {FOLDER_TREE.map(section => {
-          const isOpen = !collapsed[section.id];
-          const accessibleFolders = section.folders.filter(f => canView(user?.role, f));
-
-          return (
-            <div key={section.id} style={{ marginBottom:4 }}>
-              {/* Section header */}
-              <button
-                onClick={() => toggleSection(section.id)}
-                style={{
-                  width:'100%', display:'flex', alignItems:'center', gap:8, padding:'8px 12px',
-                  borderRadius:10, cursor:'pointer', background:'none', border:'none', textAlign:'left',
-                  transition:'background var(--transition)',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background='var(--bg-hover)'}
-                onMouseLeave={e => e.currentTarget.style.background='none'}
-              >
-                <span style={{ fontSize:15 }}>{section.emoji}</span>
-                <span style={{ flex:1, fontSize:12, fontWeight:700, color:'var(--text-secondary)' }}>{section.name}</span>
-                {accessibleFolders.length === 0 && <span style={{ fontSize:10 }}>ð</span>}
-                <span style={{ fontSize:10, color:'var(--text-muted)', transform: isOpen ? 'rotate(90deg)' : 'rotate(0)', transition:'transform .2s' }}>â¶</span>
-              </button>
-
-              {/* Folders */}
-              {isOpen && (
-                <div style={{ paddingLeft:8 }}>
-                  {section.folders.map(folder => {
-                    const hasAccess = canView(user?.role, folder);
-                    const isActive = currentFolderId === folder.id && activePage === 'library';
-                    const count = fileCountForFolder(folder.id);
-
-                    return (
-                      <button
-                        key={folder.id}
-                        onClick={() => hasAccess && onFolderClick(folder)}
-                        className={`sidebar-item ${isActive ? 'active' : ''}`}
-                        style={{
-                          width:'100%', display:'flex', alignItems:'center', gap:8, padding:'7px 10px 7px 14px',
-                          borderRadius:8, cursor: hasAccess ? 'pointer' : 'not-allowed',
-                          background:'none', border:'none', textAlign:'left',
-                          opacity: hasAccess ? 1 : 0.4,
-                        }}
-                      >
-                        <span style={{ fontSize:12 }}>{hasAccess ? 'ð' : 'ð'}</span>
-                        <span style={{ flex:1, fontSize:12, color: isActive ? 'var(--accent)' : 'var(--text-secondary)', fontWeight: isActive ? 700 : 500, lineHeight:1.3 }}>
-                          {folder.name}
-                        </span>
-                        {hasAccess && count > 0 && (
-                          <span style={{
-                            fontSize:10, fontWeight:700, minWidth:18, height:18, borderRadius:6,
-                            background: isActive ? 'var(--accent)' : 'var(--bg-surface)',
-                            color: isActive ? 'white' : 'var(--text-muted)',
-                            display:'flex', alignItems:'center', justifyContent:'center', padding:'0 4px',
-                          }}>{count}</span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* User card at bottom */}
-      <div style={{ padding:12, borderTop:'1px solid var(--border)' }}>
-        <button onClick={onSettingsClick} style={{
-          width:'100%', display:'flex', alignItems:'center', gap:10, padding:'10px 12px',
-          borderRadius:12, background:'var(--bg-surface)', border:'1px solid var(--border)',
-          cursor:'pointer', textAlign:'left',
-        }}>
-          <div style={{
-            width:32, height:32, borderRadius:9, flexShrink:0,
-            background:`linear-gradient(135deg,${ROLE_META[user?.role]?.color || '#16a34a'}cc,${ROLE_META[user?.role]?.color || '#16a34a'}66)`,
-            display:'flex', alignItems:'center', justifyContent:'center',
-            fontSize:11, fontWeight:800, color:'white',
-          }}>{user?.avatar}</div>
-          <div style={{ flex:1, minWidth:0 }}>
-            <div style={{ fontSize:12, fontWeight:700, color:'var(--text-primary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user?.name}</div>
-            <div style={{ fontSize:10, color:ROLE_META[user?.role]?.color, fontWeight:600 }}>{ROLE_META[user?.role]?.label}</div>
+    <aside className={`sidebar ${open ? 'open' : ''}`}>
+      <div className="sidebar-header">
+        <div className="sidebar-brand">
+          <div className="sidebar-brand-icon">M</div>
+          <div className="sidebar-brand-text">
+            <div className="sidebar-brand-name">NPD Central</div>
+            <div className="sidebar-brand-sub">Document Library</div>
           </div>
-          <span style={{ fontSize:12, color:'var(--text-muted)' }}>âï¸</span>
-        </button>
+        </div>
+      </div>
+
+      <nav className="sidebar-nav">
+        <div className="nav-section">
+          <div className="nav-section-label">Navigation</div>
+          <div
+            className={`nav-item ${view === 'dashboard' && !activeSection ? 'active' : ''}`}
+            onClick={() => { onViewChange('dashboard'); }}
+          >
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+              <rect x="1" y="1" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.3"/>
+              <rect x="8.5" y="1" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.3"/>
+              <rect x="1" y="8.5" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.3"/>
+              <rect x="8.5" y="8.5" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.3"/>
+            </svg>
+            Dashboard
+          </div>
+        </div>
+
+        <div className="nav-section">
+          <div className="nav-section-label">Sections</div>
+          {FOLDER_TREE.map(section => {
+            const hasAccess = isAdmin || section.folders.some(f =>
+              canView(currentUser.id, f.id, accessMatrix)
+            );
+            if (!hasAccess) return null;
+
+            const sectionActive = activeSection === section.id;
+
+            return (
+              <div key={section.id}>
+                <div
+                  className={`nav-item ${sectionActive && view === 'files' ? 'active' : ''}`}
+                  onClick={() => onNavigate(section.id)}
+                  style={{ '--section-color': section.color }}
+                >
+                  <div className="nav-section-dot" style={{ background: section.color }} />
+                  <span className="nav-item-label">{section.name}</span>
+                  {section.owner && (
+                    <span className="nav-item-owner">{section.owner.split(' ')[0]}</span>
+                  )}
+                </div>
+                {sectionActive && view === 'files' && (
+                  <div className="nav-section-folders">
+                    {section.folders.map(folder => {
+                      const fAccess = isAdmin || canView(currentUser.id, folder.id, accessMatrix);
+                      if (!fAccess) return null;
+                      return (
+                        <div
+                          key={folder.id}
+                          className={`nav-folder-item ${activeFolder === folder.id ? 'active' : ''}`}
+                          onClick={() => onNavigate(section.id, folder.id)}
+                        >
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <path d="M1 3C1 2.45 1.45 2 2 2H4.5L5.5 3H10C10.55 3 11 3.45 11 4V9C11 9.55 10.55 10 10 10H2C1.45 10 1 9.55 1 9V3Z" stroke="currentColor" strokeWidth="1.1"/>
+                          </svg>
+                          {folder.name}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {isAdmin && (
+          <div className="nav-section">
+            <div className="nav-section-label">Admin</div>
+            <div
+              className={`nav-item ${view === 'settings' ? 'active' : ''}`}
+              onClick={() => onViewChange('settings')}
+            >
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                <circle cx="7.5" cy="7.5" r="2.5" stroke="currentColor" strokeWidth="1.3"/>
+                <path d="M7.5 1.5V3M7.5 12V13.5M1.5 7.5H3M12 7.5H13.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+              </svg>
+              Access Control
+            </div>
+          </div>
+        )}
+      </nav>
+
+      <div className="sidebar-footer">
+        <div className="sidebar-user-card" onClick={onLogout} title="Click to logout">
+          <div className="sidebar-avatar" style={{ background: `linear-gradient(135deg, ${currentUser.color || '#16a34a'}88, ${currentUser.color || '#16a34a'})` }}>
+            {currentUser.avatar}
+          </div>
+          <div>
+            <div className="sidebar-user-name">{currentUser.name}</div>
+            <div className="sidebar-user-role">{currentUser.role}</div>
+          </div>
+        </div>
       </div>
     </aside>
   );
