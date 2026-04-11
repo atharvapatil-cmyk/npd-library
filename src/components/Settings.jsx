@@ -1,271 +1,186 @@
 import { useState } from 'react';
-import { ROLE_META, FOLDER_TREE } from '../data/data';
+import { FOLDER_TREE, ACCESS, ACCESS_LABEL } from '../data/data.js';
 
-const TABS = ['Access Management', 'Folder Permissions', 'Activity Log', 'General'];
+export default function Settings({ currentUser, users, accessMatrix, onMatrixUpdate }) {
+  const [selectedUser, setSelectedUser] = useState(users[0]?.id || null);
+  const [activeTab, setActiveTab] = useState('access');
 
-export default function Settings({ user, users, setUsers, files }) {
-  const [activeTab, setActiveTab] = useState('Access Management');
-  const [newName, setNewName] = useState('');
-  const [newEmail, setNewEmail] = useState('');
-  const [newRole, setNewRole] = useState('rd_member');
-  const [added, setAdded] = useState(false);
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = currentUser.role === 'admin';
+  if (!isAdmin) {
+    return (
+      <div className="settings-denied">
+        <div className="settings-denied-icon">L</div>
+        <div className="settings-denied-title">Access Restricted</div>
+        <div className="settings-denied-sub">Only administrators can manage access control.</div>
+      </div>
+    );
+  }
 
-  const addUser = () => {
-    if (!newName.trim() || !newEmail.trim()) return;
-    const initials = newName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-    const newUser = { id: 'u' + Date.now(), name: newName.trim(), email: newEmail.trim(), role: newRole, avatar: initials };
-    setUsers(p => [...p, newUser]);
-    setNewName(''); setNewEmail(''); setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
+  const targetUser = users.find(u => u.id === selectedUser);
+
+  const getLevel = (userId, folderId) => {
+    return (accessMatrix[userId] && accessMatrix[userId][folderId] !== undefined)
+      ? accessMatrix[userId][folderId]
+      : ACCESS.NONE;
   };
 
-  const updateRole = (uid, role) => {
-    if (!isAdmin) return;
-    setUsers(p => p.map(u => u.id === uid ? { ...u, role } : u));
+  const cycleAccess = (userId, folderId) => {
+    const current = getLevel(userId, folderId);
+    const next = (current + 1) % 4;
+    onMatrixUpdate(userId, folderId, next);
   };
 
-  const removeUser = (uid) => {
-    if (!isAdmin || uid === user.id) return;
-    setUsers(p => p.filter(u => u.id !== uid));
+  const setAllForUser = (userId, level) => {
+    FOLDER_TREE.forEach(section => {
+      section.folders.forEach(folder => {
+        onMatrixUpdate(userId, folder.id, level);
+      });
+    });
   };
 
-  // Fake activity log
-  const activityLog = [
-    { action: 'Uploaded', file: 'Ashwagandha Brief v2.3', by: 'Priya Sharma', time: '2 hours ago' },
-    { action: 'Starred', file: 'Q2 Stage Gate Tracker', by: 'Vikram Joshi', time: '4 hours ago' },
-    { action: 'Updated', file: 'FSSAI Compliance Checklist', by: 'Sneha Pillai', time: '1 day ago' },
-    { action: 'Uploaded', file: 'ManFuel Launch Checklist', by: 'Pooja Bhatt', time: '2 days ago' },
-    { action: 'Deleted', file: 'Old Concept Brief', by: 'Rahul Desai', time: '3 days ago' },
-    { action: 'Uploaded', file: 'Zinc Picolinate COA', by: 'Deepa Nair', time: '3 days ago' },
-  ];
+  const setAllForFolder = (folderId, level) => {
+    users.forEach(u => {
+      onMatrixUpdate(u.id, folderId, level);
+    });
+  };
+
+  const levelColors = ['#4b7c5e', '#3b82f6', '#f59e0b', '#4ade80'];
+  const levelBg = ['rgba(75,124,94,0.1)', 'rgba(59,130,246,0.12)', 'rgba(245,158,11,0.12)', 'rgba(74,222,128,0.12)'];
 
   return (
-    <div style={{ padding:28 }}>
-      {/* Header */}
-      <div style={{ marginBottom:24 }}>
-        <h2 style={{ fontSize:22, fontWeight:900, color:'var(--text-primary)', margin:'0 0 6px' }}>âï¸ Settings</h2>
-        <p style={{ fontSize:13, color:'var(--text-muted)', margin:0 }}>
-          {isAdmin ? 'Manage access, permissions, and library configuration.' : 'View access levels and library settings.'}
-        </p>
+    <div className="settings-page">
+      <div className="settings-header">
+        <h2 className="settings-title">Access Control Matrix</h2>
+        <p className="settings-sub">Manage per-user, per-folder permissions across all sections</p>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display:'flex', gap:4, marginBottom:24, borderBottom:'1px solid var(--border)', paddingBottom:0 }}>
-        {TABS.map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)}
-            style={{
-              padding:'9px 16px', border:'none', cursor:'pointer', fontSize:13, fontWeight:700,
-              background:'none', transition:'all .15s',
-              color: activeTab === tab ? 'var(--accent)' : 'var(--text-muted)',
-              borderBottom: activeTab === tab ? '2px solid var(--accent)' : '2px solid transparent',
-              marginBottom:-1,
-            }}>
-            {tab}
-          </button>
-        ))}
+      <div className="settings-tabs">
+        <button
+          className={`settings-tab ${activeTab === 'access' ? 'active' : ''}`}
+          onClick={() => setActiveTab('access')}
+        >
+          Access Matrix
+        </button>
+        <button
+          className={`settings-tab ${activeTab === 'users' ? 'active' : ''}`}
+          onClick={() => setActiveTab('users')}
+        >
+          User Profiles
+        </button>
       </div>
 
-      {/* ACCESS MANAGEMENT */}
-      {activeTab === 'Access Management' && (
-        <div>
-          {/* Add user form (admin only) */}
-          {isAdmin && (
-            <div style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:16, padding:20, marginBottom:20 }}>
-              <h4 style={{ fontSize:14, fontWeight:800, color:'var(--text-primary)', margin:'0 0 16px' }}>Add New Member</h4>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
-                <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Full Name"
-                  style={{ padding:'9px 12px', borderRadius:10, border:'1px solid var(--border)', background:'var(--bg-surface)', color:'var(--text-primary)', fontSize:13 }} />
-                <input value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="Email Address"
-                  style={{ padding:'9px 12px', borderRadius:10, border:'1px solid var(--border)', background:'var(--bg-surface)', color:'var(--text-primary)', fontSize:13 }} />
+      {activeTab === 'access' && (
+        <div className="access-matrix-wrapper">
+          <div className="access-legend">
+            {ACCESS_LABEL.map((label, i) => (
+              <div key={i} className="legend-item">
+                <div className="legend-dot" style={{ background: levelColors[i] }} />
+                <span>{label}</span>
               </div>
-              <div style={{ display:'flex', gap:10, alignItems:'center' }}>
-                <select value={newRole} onChange={e => setNewRole(e.target.value)}
-                  style={{ flex:1, padding:'9px 12px', borderRadius:10, border:'1px solid var(--border)', background:'var(--bg-surface)', color:'var(--text-primary)', fontSize:13 }}>
-                  {Object.entries(ROLE_META).map(([k, v]) => (
-                    <option key={k} value={k}>{v.emoji} {v.label}</option>
-                  ))}
-                </select>
-                <button onClick={addUser}
-                  className="btn-glow"
-                  style={{ padding:'9px 20px', borderRadius:10, border:'none', cursor:'pointer', color:'white', fontSize:13, fontWeight:700 }}>
-                  + Add Member
-                </button>
-                {added && <span style={{ fontSize:12, color:'var(--accent)', fontWeight:700 }}>â Added!</span>}
-              </div>
-            </div>
-          )}
-
-          {/* User list */}
-          <div style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:16, overflow:'hidden' }}>
-            <div style={{ padding:'14px 18px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-              <h4 style={{ fontSize:14, fontWeight:800, color:'var(--text-primary)', margin:0 }}>Team Members ({users.length})</h4>
-              <span style={{ fontSize:11, color:'var(--text-muted)' }}>Files: {files.length} total</span>
-            </div>
-            <table className="tbl" style={{ width:'100%', borderCollapse:'collapse' }}>
-              <thead>
-                <tr>
-                  <th style={{ textAlign:'left' }}>Member</th>
-                  <th style={{ textAlign:'left' }}>Role</th>
-                  <th style={{ textAlign:'left' }}>Docs Accessible</th>
-                  {isAdmin && <th style={{ textAlign:'right' }}>Actions</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {users.map(u => {
-                  const rm = ROLE_META[u.role] || {};
-                  const docCount = files.length; // simplified
-                  return (
-                    <tr key={u.id}>
-                      <td>
-                        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                          <div style={{ width:34, height:34, borderRadius:10, background:`linear-gradient(135deg,${rm.color || '#16a34a'}cc,${rm.color || '#16a34a'}66)`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:800, color:'white', flexShrink:0 }}>{u.avatar}</div>
-                          <div>
-                            <div style={{ fontSize:13, fontWeight:700, color:'var(--text-primary)' }}>{u.name} {u.id === user.id && <span style={{ fontSize:10, color:'var(--accent)', fontWeight:600 }}>(you)</span>}</div>
-                            <div style={{ fontSize:11, color:'var(--text-muted)' }}>{u.email}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        {isAdmin && u.id !== user.id ? (
-                          <select value={u.role} onChange={e => updateRole(u.id, e.target.value)}
-                            style={{ padding:'4px 8px', borderRadius:7, border:'1px solid var(--border)', background:`${rm.bg || '#f0fdf4'}`, color:rm.color, fontSize:11, fontWeight:700, cursor:'pointer' }}>
-                            {Object.entries(ROLE_META).map(([k, v]) => (
-                              <option key={k} value={k}>{v.emoji} {v.label}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          <span style={{ fontSize:11, fontWeight:700, color:rm.color, background:`${rm.bg || '#f0fdf4'}`, padding:'3px 8px', borderRadius:7 }}>{rm.emoji} {rm.label}</span>
-                        )}
-                      </td>
-                      <td style={{ fontSize:12, color:'var(--text-muted)' }}>{files.length} docs</td>
-                      {isAdmin && (
-                        <td style={{ textAlign:'right' }}>
-                          {u.id !== user.id && (
-                            <button onClick={() => removeUser(u.id)}
-                              style={{ padding:'4px 12px', borderRadius:7, border:'1px solid #fecaca', background:'#fef2f2', cursor:'pointer', fontSize:11, fontWeight:700, color:'#dc2626' }}>
-                              Remove
-                            </button>
-                          )}
-                        </td>
-                      )}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            ))}
+            <div className="legend-hint">Click any cell to cycle access level</div>
           </div>
-        </div>
-      )}
 
-      {/* FOLDER PERMISSIONS */}
-      {activeTab === 'Folder Permissions' && (
-        <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-          {FOLDER_TREE.map(section => (
-            <div key={section.id} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:16, overflow:'hidden' }}>
-              <div style={{ padding:'14px 18px', background:`${section.color}0d`, borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', gap:10 }}>
-                <span style={{ fontSize:20 }}>{section.emoji}</span>
-                <span style={{ fontSize:14, fontWeight:800, color:'var(--text-primary)' }}>{section.name}</span>
-              </div>
-              <table className="tbl" style={{ width:'100%', borderCollapse:'collapse' }}>
-                <thead>
-                  <tr>
-                    <th style={{ textAlign:'left' }}>Folder</th>
-                    <th style={{ textAlign:'left' }}>Can View</th>
-                    <th style={{ textAlign:'left' }}>Can Edit</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {section.folders.map(f => (
-                    <tr key={f.id}>
-                      <td style={{ fontSize:13, fontWeight:600, color:'var(--text-primary)' }}>ð {f.name}</td>
-                      <td>
-                        <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
-                          {f.viewRoles.map(r => (
-                            <span key={r} style={{ fontSize:10, fontWeight:700, color:ROLE_META[r]?.color, background:`${ROLE_META[r]?.bg}`, padding:'2px 7px', borderRadius:5 }}>{ROLE_META[r]?.label}</span>
-                          ))}
-                        </div>
-                      </td>
-                      <td>
-                        <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
-                          {f.editRoles.map(r => (
-                            <span key={r} style={{ fontSize:10, fontWeight:700, color:ROLE_META[r]?.color, background:`${ROLE_META[r]?.bg}`, padding:'2px 7px', borderRadius:5 }}>{ROLE_META[r]?.label}</span>
-                          ))}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ACTIVITY LOG */}
-      {activeTab === 'Activity Log' && (
-        <div style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:16, overflow:'hidden' }}>
-          <div style={{ padding:'14px 18px', borderBottom:'1px solid var(--border)' }}>
-            <h4 style={{ fontSize:14, fontWeight:800, color:'var(--text-primary)', margin:0 }}>Recent Activity</h4>
-          </div>
-          <div style={{ padding:4 }}>
-            {activityLog.map((a, i) => (
-              <div key={i} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', borderBottom: i < activityLog.length-1 ? '1px solid var(--border)' : 'none' }}>
-                <div style={{ width:36, height:36, borderRadius:10, background:'var(--bg-surface)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>
-                  {a.action === 'Uploaded' ? 'â' : a.action === 'Starred' ? 'â' : a.action === 'Deleted' ? 'ð' : 'âï¸'}
+          <div className="user-selector">
+            {users.map(u => (
+              <div
+                key={u.id}
+                className={`user-selector-chip ${selectedUser === u.id ? 'active' : ''}`}
+                onClick={() => setSelectedUser(u.id)}
+              >
+                <div className="user-chip-avatar" style={{ background: `linear-gradient(135deg, ${u.color || '#16a34a'}88, ${u.color || '#16a34a'})` }}>
+                  {u.avatar}
                 </div>
-                <div style={{ flex:1 }}>
-                  <div style={{ fontSize:13, color:'var(--text-primary)' }}>
-                    <strong>{a.by}</strong> {a.action.toLowerCase()} <span style={{ color:'var(--accent)' }}>"{a.file}"</span>
-                  </div>
-                  <div style={{ fontSize:11, color:'var(--text-muted)' }}>{a.time}</div>
-                </div>
+                {u.name.split(' ')[0]}
               </div>
             ))}
           </div>
-        </div>
-      )}
 
-      {/* GENERAL */}
-      {activeTab === 'General' && (
-        <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-          <div style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:16, padding:20 }}>
-            <h4 style={{ fontSize:14, fontWeight:800, color:'var(--text-primary)', margin:'0 0 16px' }}>Library Info</h4>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
-              {[
-                { label:'Library Name', value:'NPD Library' },
-                { label:'Organization', value:'Mosaic Wellness' },
-                { label:'Total Documents', value:`${files.length}` },
-                { label:'Total Members', value:`${users.length}` },
-                { label:'Active Sections', value:'5' },
-                { label:'Total Folders', value:'16' },
-              ].map(item => (
-                <div key={item.label} style={{ padding:'12px 14px', borderRadius:10, background:'var(--bg-surface)', border:'1px solid var(--border)' }}>
-                  <div style={{ fontSize:10, fontWeight:700, color:'var(--text-muted)', letterSpacing:'.5px', textTransform:'uppercase', marginBottom:4 }}>{item.label}</div>
-                  <div style={{ fontSize:15, fontWeight:800, color:'var(--text-primary)' }}>{item.value}</div>
+          {targetUser && (
+            <div className="matrix-user-panel">
+              <div className="matrix-user-header">
+                <div className="matrix-user-avatar" style={{ background: `linear-gradient(135deg, ${targetUser.color || '#16a34a'}88, ${targetUser.color || '#16a34a'})` }}>
+                  {targetUser.avatar}
+                </div>
+                <div>
+                  <div className="matrix-user-name">{targetUser.name}</div>
+                  <div className="matrix-user-role">{targetUser.role}</div>
+                </div>
+                <div className="matrix-bulk-actions">
+                  <span className="matrix-bulk-label">Set all:</span>
+                  {ACCESS_LABEL.map((label, i) => (
+                    <button
+                      key={i}
+                      className="matrix-bulk-btn"
+                      style={{ color: levelColors[i], borderColor: levelColors[i] + '44' }}
+                      onClick={() => setAllForUser(targetUser.id, i)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {FOLDER_TREE.map(section => (
+                <div key={section.id} className="matrix-section">
+                  <div className="matrix-section-title" style={{ color: section.color }}>
+                    <div className="matrix-section-dot" style={{ background: section.color }} />
+                    {section.name}
+                    {section.owner && <span className="matrix-section-owner">({section.owner})</span>}
+                  </div>
+                  <div className="matrix-folder-list">
+                    {section.folders.map(folder => {
+                      const level = getLevel(targetUser.id, folder.id);
+                      return (
+                        <div key={folder.id} className="matrix-folder-row">
+                          <div className="matrix-folder-name">
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                              <path d="M1 3C1 2.45 1.45 2 2 2H4.5L5.5 3H10C10.55 3 11 3.45 11 4V9C11 9.55 10.55 10 10 10H2C1.45 10 1 9.55 1 9V3Z" stroke="currentColor" strokeWidth="1.1"/>
+                            </svg>
+                            {folder.name}
+                          </div>
+                          <div className="matrix-access-buttons">
+                            {ACCESS_LABEL.map((label, i) => (
+                              <button
+                                key={i}
+                                className={`matrix-access-btn ${level === i ? 'active' : ''}`}
+                                style={level === i ? { background: levelBg[i], color: levelColors[i], borderColor: levelColors[i] + '66' } : {}}
+                                onClick={() => onMatrixUpdate(targetUser.id, folder.id, i)}
+                              >
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
+          )}
+        </div>
+      )}
 
-          <div style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:16, padding:20 }}>
-            <h4 style={{ fontSize:14, fontWeight:800, color:'var(--text-primary)', margin:'0 0 4px' }}>Your Role</h4>
-            <p style={{ fontSize:12, color:'var(--text-muted)', margin:'0 0 14px' }}>Current access level for this session.</p>
-            <div style={{ display:'flex', alignItems:'center', gap:14, padding:14, borderRadius:12, background:'var(--bg-surface)', border:'1px solid var(--border)' }}>
-              <div style={{ fontSize:32 }}>{ROLE_META[user?.role]?.emoji}</div>
-              <div>
-                <div style={{ fontSize:16, fontWeight:800, color:'var(--text-primary)' }}>{ROLE_META[user?.role]?.label}</div>
-                <div style={{ fontSize:12, color:'var(--text-muted)' }}>
-                  {user?.role === 'admin' ? 'Full access to all sections and admin controls.' :
-                   user?.role === 'nutra_lead' ? 'Full access to Nutraceuticals; view PMO & Regulatory.' :
-                   user?.role === 'pc_lead' ? 'Full access to Personal Care; view Regulatory.' :
-                   user?.role === 'reg_lead' ? 'Full access to Regulatory; view relevant PC files.' :
-                   user?.role === 'pmo' ? 'Full access to PMO; view Nutraceuticals stage gates.' :
-                   'Access to R&D Lab; view Nutraceuticals & PC files.'}
-                </div>
+      {activeTab === 'users' && (
+        <div className="users-grid">
+          {users.map(u => (
+            <div key={u.id} className="user-profile-card">
+              <div className="user-profile-avatar" style={{ background: `linear-gradient(135deg, ${u.color || '#16a34a'}88, ${u.color || '#16a34a'})` }}>
+                {u.avatar}
+              </div>
+              <div className="user-profile-name">{u.name}</div>
+              <div className="user-profile-role">{u.role}</div>
+              {u.department && <div className="user-profile-dept">{u.department}</div>}
+              <div className="user-profile-access">
+                {FOLDER_TREE.reduce((count, section) =>
+                  count + section.folders.filter(f =>
+                    getLevel(u.id, f.id) > ACCESS.NONE
+                  ).length, 0
+                )} folders accessible
               </div>
             </div>
-          </div>
+          ))}
         </div>
       )}
     </div>
