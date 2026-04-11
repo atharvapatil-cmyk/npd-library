@@ -1,153 +1,365 @@
-// NPD Library â Core Data & Helpers
-// Mosaic Wellness R&D Team
+// NPD Team Central Document Library
+// Architecture based on R&D Design Space Architecture v2.7
 
-export const OPENAI_KEY = 'sk-proj-La3ShLvVPQyprwivMQ7T3BlbkFJplaceholderReplaceMe';
+export const ACCESS = { NONE: 0, VIEW: 1, EDIT: 2, ADMIN: 3 };
+export const ACCESS_LABEL = ['No Access', 'View', 'Edit', 'Admin'];
+export const ACCESS_COLOR = ['#374151', '#1d4ed8', '#b45309', '#15803d'];
 
-export const ROLE_META = {
-  admin:      { label: 'Admin',             color: '#7c3aed', bg: '#f3e8ff', emoji: 'ð¡ï¸' },
-  nutra_lead: { label: 'Nutra Lead',        color: '#ea580c', bg: '#fff7ed', emoji: 'ð§ª' },
-  pc_lead:    { label: 'PC Lead',           color: '#0891b2', bg: '#ecfeff', emoji: 'ð§´' },
-  reg_lead:   { label: 'Reg Lead',          color: '#16a34a', bg: '#f0fdf4', emoji: 'ð' },
-  pmo:        { label: 'PMO',               color: '#ca8a04', bg: '#fefce8', emoji: 'ð' },
-  rd_member:  { label: 'R&D Member',        color: '#6366f1', bg: '#eef2ff', emoji: 'ð¬' },
-};
-
-export const INITIAL_USERS = [
-  { id: 'u1',  name: 'Arjun Mehta',      role: 'admin',      avatar: 'AM', email: 'arjun.m@mosaic.in' },
-  { id: 'u2',  name: 'Priya Sharma',     role: 'nutra_lead', avatar: 'PS', email: 'priya.s@mosaic.in' },
-  { id: 'u3',  name: 'Rahul Desai',      role: 'pc_lead',    avatar: 'RD', email: 'rahul.d@mosaic.in' },
-  { id: 'u4',  name: 'Sneha Pillai',     role: 'reg_lead',   avatar: 'SP', email: 'sneha.p@mosaic.in' },
-  { id: 'u5',  name: 'Vikram Joshi',     role: 'pmo',        avatar: 'VJ', email: 'vikram.j@mosaic.in' },
-  { id: 'u6',  name: 'Deepa Nair',       role: 'rd_member',  avatar: 'DN', email: 'deepa.n@mosaic.in' },
-  { id: 'u7',  name: 'Karan Verma',      role: 'rd_member',  avatar: 'KV', email: 'karan.v@mosaic.in' },
-  { id: 'u8',  name: 'Meena Krishnan',   role: 'nutra_lead', avatar: 'MK', email: 'meena.k@mosaic.in' },
-  { id: 'u9',  name: 'Rohan Agarwal',    role: 'pc_lead',    avatar: 'RA', email: 'rohan.a@mosaic.in' },
-  { id: 'u10', name: 'Pooja Bhatt',      role: 'pmo',        avatar: 'PB', email: 'pooja.b@mosaic.in' },
-];
-
-// FOLDER_TREE: sections with sub-folders
-// viewRoles: roles that can see files | editRoles: roles that can upload/delete
 export const FOLDER_TREE = [
   {
-    id: 's1', name: 'Nutraceuticals', emoji: 'ð§ª', color: '#ea580c',
+    id: 'nutraceuticals',
+    name: 'Nutraceuticals',
+    owner: 'Darshani',
+    color: '#16a34a',
+    light: '#4ade80',
+    tag: 'NUTRA',
     folders: [
-      { id: 'f1',  name: 'Formulation Briefs',    viewRoles: ['admin','nutra_lead','rd_member','pmo'], editRoles: ['admin','nutra_lead'] },
-      { id: 'f2',  name: 'Clinical Studies',       viewRoles: ['admin','nutra_lead','rd_member'],      editRoles: ['admin','nutra_lead'] },
-      { id: 'f3',  name: 'Ingredient Specs',       viewRoles: ['admin','nutra_lead','rd_member'],      editRoles: ['admin','nutra_lead'] },
-      { id: 'f4',  name: 'Stability Reports',      viewRoles: ['admin','nutra_lead','pmo'],            editRoles: ['admin','nutra_lead'] },
+      {
+        id: 'nutra-fd',
+        name: 'Formulation & Development',
+        desc: 'Formulation trials, product specs, development roadmaps',
+        access: { admin: 3, nutra_lead: 3, pc_lead: 1, reg_lead: 1, pmo: 1, rd_member: 2 },
+        files: [
+          { id: 'f001', name: 'Ashwagandha Extract Formulation v3.pdf', type: 'pdf', size: '2.4 MB', modified: '2026-03-15', tags: ['ayurvedic', 'adaptogen'] },
+          { id: 'f002', name: 'Omega-3 Softgel Development Notes.docx', type: 'docx', size: '890 KB', modified: '2026-03-28', tags: ['omega', 'softgel'] },
+          { id: 'f003', name: 'Collagen Peptide Matrix Study.xlsx', type: 'xlsx', size: '1.1 MB', modified: '2026-04-01', tags: ['collagen', 'peptide'] },
+        ]
+      },
+      {
+        id: 'nutra-rs',
+        name: 'Recipe & Specifications',
+        desc: 'Master recipes, batch formulas, specification sheets',
+        access: { admin: 3, nutra_lead: 3, pc_lead: 1, reg_lead: 1, pmo: 1, rd_member: 2 },
+        files: [
+          { id: 'f004', name: 'Master Recipe - Ashwagandha 500mg.pdf', type: 'pdf', size: '560 KB', modified: '2026-02-10', tags: ['master', 'recipe'] },
+          { id: 'f005', name: 'Spec Sheet - Vitamin D3 2000IU.pdf', type: 'pdf', size: '340 KB', modified: '2026-03-05', tags: ['vitamin', 'spec'] },
+        ]
+      },
+      {
+        id: 'nutra-ing',
+        name: 'Ingredients TDS/COA',
+        desc: 'Technical data sheets and certificates of analysis for all ingredients',
+        access: { admin: 3, nutra_lead: 3, pc_lead: 1, reg_lead: 2, pmo: 0, rd_member: 2 },
+        files: [
+          { id: 'f006', name: 'COA - Ashwagandha KSM-66 Lot#2024.pdf', type: 'pdf', size: '1.2 MB', modified: '2026-01-20', tags: ['coa', 'ksm66'] },
+          { id: 'f007', name: 'TDS - Marine Collagen Supplier.pdf', type: 'pdf', size: '780 KB', modified: '2026-02-14', tags: ['tds', 'collagen'] },
+        ]
+      },
+      {
+        id: 'nutra-tr',
+        name: 'Trial Records',
+        desc: 'Lab trial documentation, batch records, observations',
+        access: { admin: 3, nutra_lead: 3, pc_lead: 1, reg_lead: 1, pmo: 2, rd_member: 2 },
+        files: [
+          { id: 'f008', name: 'Trial Batch TB-2024-011 Record.pdf', type: 'pdf', size: '2.1 MB', modified: '2026-03-22', tags: ['trial', 'batch'] },
+          { id: 'f009', name: 'Pilot Scale Trial Results Q1 2026.xlsx', type: 'xlsx', size: '1.5 MB', modified: '2026-04-02', tags: ['pilot', 'scale'] },
+        ]
+      },
     ]
   },
   {
-    id: 's2', name: 'Personal Care', emoji: 'ð§´', color: '#0891b2',
+    id: 'personal-care',
+    name: 'Personal Care',
+    owner: 'Kapil',
+    color: '#2563eb',
+    light: '#60a5fa',
+    tag: 'PC',
     folders: [
-      { id: 'f5',  name: 'Product Concepts',       viewRoles: ['admin','pc_lead','rd_member','pmo'],   editRoles: ['admin','pc_lead'] },
-      { id: 'f6',  name: 'Safety Assessments',     viewRoles: ['admin','pc_lead','reg_lead'],          editRoles: ['admin','pc_lead','reg_lead'] },
-      { id: 'f7',  name: 'Claim Dossiers',         viewRoles: ['admin','pc_lead','reg_lead'],          editRoles: ['admin','pc_lead'] },
+      {
+        id: 'pc-fd',
+        name: 'Formulation & Development',
+        desc: 'Skincare and personal care product formulations',
+        access: { admin: 3, nutra_lead: 1, pc_lead: 3, reg_lead: 1, pmo: 1, rd_member: 2 },
+        files: [
+          { id: 'f010', name: 'Retinol Serum Formulation v2.pdf', type: 'pdf', size: '1.8 MB', modified: '2026-03-18', tags: ['retinol', 'serum'] },
+          { id: 'f011', name: 'SPF 50 Sunscreen Development.docx', type: 'docx', size: '1.2 MB', modified: '2026-03-30', tags: ['spf', 'sunscreen'] },
+        ]
+      },
+      {
+        id: 'pc-rs',
+        name: 'Recipe & Specifications',
+        desc: 'Personal care master recipes and product specs',
+        access: { admin: 3, nutra_lead: 1, pc_lead: 3, reg_lead: 1, pmo: 1, rd_member: 2 },
+        files: [
+          { id: 'f012', name: 'Moisturizer Master Recipe v4.pdf', type: 'pdf', size: '670 KB', modified: '2026-02-25', tags: ['moisturizer', 'recipe'] },
+        ]
+      },
+      {
+        id: 'pc-ing',
+        name: 'Ingredients TDS/COA',
+        desc: 'TDS/COA for personal care ingredients',
+        access: { admin: 3, nutra_lead: 0, pc_lead: 3, reg_lead: 2, pmo: 0, rd_member: 2 },
+        files: [
+          { id: 'f013', name: 'COA - Hyaluronic Acid Grade A.pdf', type: 'pdf', size: '450 KB', modified: '2026-01-15', tags: ['hyaluronic', 'coa'] },
+        ]
+      },
+      {
+        id: 'pc-tr',
+        name: 'Trial Records',
+        desc: 'Personal care product trial documentation',
+        access: { admin: 3, nutra_lead: 1, pc_lead: 3, reg_lead: 1, pmo: 2, rd_member: 2 },
+        files: [
+          { id: 'f014', name: 'Face Serum Trial TB-2026-003.pdf', type: 'pdf', size: '1.9 MB', modified: '2026-04-01', tags: ['trial', 'serum'] },
+        ]
+      },
     ]
   },
   {
-    id: 's3', name: 'Regulatory', emoji: 'ð', color: '#16a34a',
+    id: 'regulatory',
+    name: 'Regulatory & Compliance',
+    owner: 'Supriya',
+    color: '#ca8a04',
+    light: '#fbbf24',
+    tag: 'REG',
     folders: [
-      { id: 'f8',  name: 'Compliance Checklists',  viewRoles: ['admin','reg_lead','pmo'],              editRoles: ['admin','reg_lead'] },
-      { id: 'f9',  name: 'Market Approvals',       viewRoles: ['admin','reg_lead','pmo'],              editRoles: ['admin','reg_lead'] },
-      { id: 'f10', name: 'Label Reviews',          viewRoles: ['admin','reg_lead','pc_lead'],          editRoles: ['admin','reg_lead'] },
+      {
+        id: 'reg-lf',
+        name: 'Label Files (FSSAI/FDA/Ayush)',
+        desc: 'Approved and draft label artwork files for all regulatory bodies',
+        access: { admin: 3, nutra_lead: 1, pc_lead: 1, reg_lead: 3, pmo: 1, rd_member: 1 },
+        files: [
+          { id: 'f015', name: 'FSSAI Label - Ashwagandha Capsules.pdf', type: 'pdf', size: '2.2 MB', modified: '2026-03-10', tags: ['fssai', 'label'] },
+          { id: 'f016', name: 'FDA Compliance Label - Omega 3.pdf', type: 'pdf', size: '1.8 MB', modified: '2026-03-12', tags: ['fda', 'label'] },
+          { id: 'f017', name: 'Ayush Certificate - Chyawanprash.pdf', type: 'pdf', size: '890 KB', modified: '2026-02-28', tags: ['ayush', 'cert'] },
+        ]
+      },
+      {
+        id: 'reg-ra',
+        name: 'Regulatory Approvals',
+        desc: 'All regulatory approval documents and correspondence',
+        access: { admin: 3, nutra_lead: 1, pc_lead: 1, reg_lead: 3, pmo: 1, rd_member: 0 },
+        files: [
+          { id: 'f018', name: 'FSSAI License FBO-2024-MH-0234.pdf', type: 'pdf', size: '1.1 MB', modified: '2026-01-08', tags: ['fssai', 'license'] },
+        ]
+      },
+      {
+        id: 'reg-cs',
+        name: 'Claims Substantiation',
+        desc: 'Scientific evidence and studies supporting product claims',
+        access: { admin: 3, nutra_lead: 2, pc_lead: 2, reg_lead: 3, pmo: 1, rd_member: 1 },
+        files: [
+          { id: 'f019', name: 'Ashwagandha Stress Reduction Claims Evidence.pdf', type: 'pdf', size: '3.4 MB', modified: '2026-03-20', tags: ['claims', 'evidence'] },
+          { id: 'f020', name: 'Collagen Skin Health Clinical References.pdf', type: 'pdf', size: '2.7 MB', modified: '2026-03-25', tags: ['collagen', 'clinical'] },
+        ]
+      },
     ]
   },
   {
-    id: 's4', name: 'PMO / Project Mgmt', emoji: 'ð', color: '#ca8a04',
+    id: 'testing',
+    name: 'Testing & Records',
+    owner: 'R&D Team',
+    color: '#ea580c',
+    light: '#fb923c',
+    tag: 'TEST',
     folders: [
-      { id: 'f11', name: 'Stage Gate Trackers',    viewRoles: ['admin','pmo','nutra_lead','pc_lead'],  editRoles: ['admin','pmo'] },
-      { id: 'f12', name: 'Timelines & Milestones', viewRoles: ['admin','pmo'],                         editRoles: ['admin','pmo'] },
-      { id: 'f13', name: 'Launch Checklists',      viewRoles: ['admin','pmo','reg_lead'],              editRoles: ['admin','pmo'] },
+      {
+        id: 'test-ltr',
+        name: 'Lab Test Reports (vs. COA)',
+        desc: 'Internal lab testing vs supplier certificate of analysis',
+        access: { admin: 3, nutra_lead: 2, pc_lead: 2, reg_lead: 3, pmo: 1, rd_member: 2 },
+        files: [
+          { id: 'f021', name: 'Lab Report - Ashwagandha vs COA Q1.pdf', type: 'pdf', size: '1.6 MB', modified: '2026-03-15', tags: ['lab', 'coa'] },
+          { id: 'f022', name: 'Heavy Metal Panel - Batch TB-2026-001.pdf', type: 'pdf', size: '780 KB', modified: '2026-03-18', tags: ['heavy-metal', 'safety'] },
+        ]
+      },
+      {
+        id: 'test-ss',
+        name: 'Stability Studies',
+        desc: 'Accelerated and real-time stability study data',
+        access: { admin: 3, nutra_lead: 2, pc_lead: 2, reg_lead: 3, pmo: 1, rd_member: 2 },
+        files: [
+          { id: 'f023', name: 'Stability Study - Vitamin D3 12 Month.xlsx', type: 'xlsx', size: '2.3 MB', modified: '2026-03-30', tags: ['stability', 'vitd3'] },
+        ]
+      },
+      {
+        id: 'test-audit',
+        name: 'CDMO & Vendor Audits',
+        desc: 'Contract manufacturer and vendor qualification audits',
+        access: { admin: 3, nutra_lead: 1, pc_lead: 1, reg_lead: 3, pmo: 2, rd_member: 1 },
+        files: [
+          { id: 'f024', name: 'CDMO Audit Report - Supplier X 2025.pdf', type: 'pdf', size: '4.1 MB', modified: '2026-02-10', tags: ['cdmo', 'audit'] },
+        ]
+      },
+      {
+        id: 'test-sop',
+        name: 'R&D SOPs',
+        desc: 'Standard Operating Procedures for R&D activities',
+        access: { admin: 3, nutra_lead: 2, pc_lead: 2, reg_lead: 2, pmo: 1, rd_member: 2 },
+        files: [
+          { id: 'f025', name: 'SOP-001 Lab Safety & Handling.pdf', type: 'pdf', size: '1.2 MB', modified: '2026-01-05', tags: ['sop', 'safety'] },
+          { id: 'f026', name: 'SOP-012 Formulation Development Process.pdf', type: 'pdf', size: '2.0 MB', modified: '2026-01-20', tags: ['sop', 'formulation'] },
+        ]
+      },
+      {
+        id: 'test-pat',
+        name: 'Patents',
+        desc: 'Patent applications, grants, and IP documentation',
+        access: { admin: 3, nutra_lead: 1, pc_lead: 1, reg_lead: 2, pmo: 1, rd_member: 0 },
+        files: [
+          { id: 'f027', name: 'Patent Application - Novel Delivery System.pdf', type: 'pdf', size: '5.2 MB', modified: '2026-03-08', tags: ['patent', 'ip'] },
+        ]
+      },
     ]
   },
   {
-    id: 's5', name: 'R&D Lab', emoji: 'ð¬', color: '#6366f1',
+    id: 'projects',
+    name: 'Projects (Active/Archive)',
+    owner: 'Anish',
+    color: '#6b7280',
+    light: '#9ca3af',
+    tag: 'PROJ',
     folders: [
-      { id: 'f14', name: 'Trial Reports',          viewRoles: ['admin','rd_member','nutra_lead'],      editRoles: ['admin','rd_member'] },
-      { id: 'f15', name: 'SOPs',                   viewRoles: ['admin','rd_member','nutra_lead','pc_lead'], editRoles: ['admin','rd_member'] },
-      { id: 'f16', name: 'Raw Material COAs',      viewRoles: ['admin','rd_member','nutra_lead'],      editRoles: ['admin','rd_member'] },
+      {
+        id: 'proj-sku',
+        name: 'By Product/SKU',
+        desc: 'All project files organized by product SKU',
+        access: { admin: 3, nutra_lead: 2, pc_lead: 2, reg_lead: 2, pmo: 3, rd_member: 2 },
+        files: [
+          { id: 'f028', name: 'SKU-MW-001 Ashwagandha 60C Project Folder.pdf', type: 'pdf', size: '3.4 MB', modified: '2026-04-01', tags: ['sku', 'ashwagandha'] },
+          { id: 'f029', name: 'SKU-MW-014 Retinol Serum 30ml Project.pdf', type: 'pdf', size: '2.8 MB', modified: '2026-03-28', tags: ['sku', 'retinol'] },
+        ]
+      },
+      {
+        id: 'proj-bt',
+        name: 'Project Briefs & Timelines',
+        desc: 'Project briefs, Gantt charts, and milestone tracking',
+        access: { admin: 3, nutra_lead: 2, pc_lead: 2, reg_lead: 1, pmo: 3, rd_member: 2 },
+        files: [
+          { id: 'f030', name: 'Project Brief - Q2 2026 Launches.pdf', type: 'pdf', size: '1.4 MB', modified: '2026-04-03', tags: ['brief', 'q2'] },
+          { id: 'f031', name: 'NPD Timeline Master - 2026.xlsx', type: 'xlsx', size: '890 KB', modified: '2026-04-04', tags: ['timeline', 'npd'] },
+        ]
+      },
+      {
+        id: 'proj-dash',
+        name: 'Dashboards (Anish)',
+        desc: 'R&D performance dashboards and KPI reports',
+        access: { admin: 3, nutra_lead: 2, pc_lead: 2, reg_lead: 2, pmo: 3, rd_member: 2 },
+        files: [
+          { id: 'f032', name: 'R&D KPI Dashboard Q1 2026.xlsx', type: 'xlsx', size: '2.1 MB', modified: '2026-04-05', tags: ['kpi', 'dashboard'] },
+          { id: 'f033', name: 'Pipeline Overview - April 2026.pdf', type: 'pdf', size: '1.7 MB', modified: '2026-04-07', tags: ['pipeline', 'overview'] },
+        ]
+      },
+    ]
+  },
+  {
+    id: 'pmo',
+    name: 'PMO (Monday.com)',
+    owner: 'Vaishnavi',
+    color: '#1e1e1e',
+    light: '#6b7280',
+    tag: 'PMO',
+    folders: [
+      {
+        id: 'pmo-main',
+        name: 'Monday.com Exports',
+        desc: 'Exported reports and data from Monday.com project management',
+        access: { admin: 3, nutra_lead: 1, pc_lead: 1, reg_lead: 1, pmo: 3, rd_member: 1 },
+        files: [
+          { id: 'f034', name: 'Weekly Status Report - W14 2026.pdf', type: 'pdf', size: '560 KB', modified: '2026-04-07', tags: ['status', 'weekly'] },
+          { id: 'f035', name: 'Sprint Board Export - April 2026.xlsx', type: 'xlsx', size: '780 KB', modified: '2026-04-08', tags: ['sprint', 'export'] },
+        ]
+      },
+    ]
+  },
+  {
+    id: 'miscellaneous',
+    name: 'Miscellaneous',
+    owner: 'R&D Team',
+    color: '#7c3aed',
+    light: '#a78bfa',
+    tag: 'MISC',
+    folders: [
+      {
+        id: 'misc-vr',
+        name: 'Visit Reports',
+        desc: 'Field visit reports, factory visits, supplier visits',
+        access: { admin: 3, nutra_lead: 2, pc_lead: 2, reg_lead: 2, pmo: 2, rd_member: 2 },
+        files: [
+          { id: 'f036', name: 'Factory Visit - CDMO Supplier March 2026.pdf', type: 'pdf', size: '2.8 MB', modified: '2026-03-25', tags: ['visit', 'factory'] },
+        ]
+      },
+      {
+        id: 'misc-ca',
+        name: 'Consultants Advice',
+        desc: 'Expert consultant reports and advisory documents',
+        access: { admin: 3, nutra_lead: 2, pc_lead: 2, reg_lead: 2, pmo: 1, rd_member: 1 },
+        files: [
+          { id: 'f037', name: 'Regulatory Consultant Advisory Q1 2026.pdf', type: 'pdf', size: '1.3 MB', modified: '2026-03-15', tags: ['consultant', 'regulatory'] },
+        ]
+      },
+      {
+        id: 'misc-br',
+        name: 'Benchmarking Reports',
+        desc: 'Competitive benchmarking and market analysis',
+        access: { admin: 3, nutra_lead: 2, pc_lead: 2, reg_lead: 1, pmo: 2, rd_member: 1 },
+        files: [
+          { id: 'f038', name: 'Nutraceuticals Market Benchmark 2026.pdf', type: 'pdf', size: '4.5 MB', modified: '2026-03-20', tags: ['benchmark', 'market'] },
+        ]
+      },
+      {
+        id: 'misc-ts',
+        name: 'Trade Secrets',
+        desc: 'Confidential proprietary formulation data and IP',
+        access: { admin: 3, nutra_lead: 0, pc_lead: 0, reg_lead: 0, pmo: 0, rd_member: 0 },
+        files: [
+          { id: 'f039', name: 'Proprietary Blend Formula - CLASSIFIED.pdf', type: 'pdf', size: '890 KB', modified: '2026-04-01', tags: ['classified', 'proprietary'] },
+        ]
+      },
     ]
   },
 ];
 
-// All folders flat
-const ALL_FOLDERS = FOLDER_TREE.flatMap(s => s.folders.map(f => ({ ...f, sectionId: s.id })));
-
-export function getFolderById(id) {
-  return ALL_FOLDERS.find(f => f.id === id) || null;
-}
-
-export function getParentSection(folderId) {
-  return FOLDER_TREE.find(s => s.folders.some(f => f.id === folderId)) || null;
-}
-
-export function canView(role, folder) {
-  if (!role || !folder) return false;
-  return folder.viewRoles.includes(role);
-}
-
-export function canEdit(role, folder) {
-  if (!role || !folder) return false;
-  return folder.editRoles.includes(role);
-}
-
-export function fileTypeLabel(type) {
-  const m = { pdf: 'PDF', xlsx: 'Excel', pptx: 'PPT', docx: 'Word', csv: 'CSV', img: 'Image' };
-  return m[type] || type.toUpperCase();
-}
-
-export function fileTypeColor(type) {
-  const m = { pdf: '#dc2626', xlsx: '#16a34a', pptx: '#ea580c', docx: '#2563eb', csv: '#0891b2', img: '#7c3aed' };
-  return m[type] || '#6b7280';
-}
-
-export function fileTypeClass(type) {
-  const m = { pdf: 'ð', xlsx: 'ð', pptx: 'ð', docx: 'ð', csv: 'ðï¸', img: 'ð¼ï¸' };
-  return m[type] || 'ð';
-}
-
-export function formatDate(iso) {
-  return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-}
-
-export const INITIAL_FILES = [
-  // Nutraceuticals
-  { id: 'fil1',  name: 'Ashwagandha KSM-66 Formulation Brief v2.3',   type: 'pdf',  folderId: 'f1',  version: 'v2.3', desc: 'Full brief for stress-relief supplement with KSM-66 extract.', tags: ['ashwagandha','adaptogen','stress'], uploadedBy: 'u2', uploadedAt: '2026-03-12T09:30:00', starred: true,  size: '1.8 MB' },
-  { id: 'fil2',  name: 'Omega-3 Clinical Study Summary',               type: 'docx', folderId: 'f2',  version: 'v1.0', desc: 'Summary of clinical endpoints for omega-3 cardiovascular claims.', tags: ['omega3','clinical','cardiovascular'], uploadedBy: 'u2', uploadedAt: '2026-03-18T11:00:00', starred: false, size: '2.4 MB' },
-  { id: 'fil3',  name: 'Curcumin Bioavailability Enhancement Study',   type: 'pdf',  folderId: 'f2',  version: 'v1.2', desc: 'Research on piperine co-formulation improving curcumin absorption.', tags: ['curcumin','bioavailability','turmeric'], uploadedBy: 'u8', uploadedAt: '2026-03-20T14:00:00', starred: true,  size: '3.1 MB' },
-  { id: 'fil4',  name: 'Probiotic Blend Ingredient Specs',             type: 'xlsx', folderId: 'f3',  version: 'v3.0', desc: 'Full COA and species breakdown for 10-strain probiotic blend.', tags: ['probiotic','gut','specs'], uploadedBy: 'u2', uploadedAt: '2026-02-28T10:00:00', starred: false, size: '0.9 MB' },
-  { id: 'fil5',  name: 'Q1 Stability Report â Collagen Shots',        type: 'pdf',  folderId: 'f4',  version: 'v1.1', desc: 'Accelerated stability testing results for marine collagen shots.', tags: ['collagen','stability','q1'], uploadedBy: 'u8', uploadedAt: '2026-04-01T08:45:00', starred: false, size: '1.5 MB' },
-  // Personal Care
-  { id: 'fil6',  name: 'HairFall Defense Serum Concept Brief',         type: 'pptx', folderId: 'f5',  version: 'v1.0', desc: 'Product concept deck for hair fall serum targeting DHT.', tags: ['hairfall','serum','concept'], uploadedBy: 'u3', uploadedAt: '2026-03-05T13:20:00', starred: true,  size: '4.2 MB' },
-  { id: 'fil7',  name: 'Face Wash Safety Assessment â Salicylic Acid', type: 'pdf',  folderId: 'f6',  version: 'v2.1', desc: 'ECHA safety dossier for 2% salicylic acid face wash formulation.', tags: ['facewash','salicylic','safety'], uploadedBy: 'u3', uploadedAt: '2026-03-22T10:30:00', starred: false, size: '2.2 MB' },
-  { id: 'fil8',  name: 'Moisturiser Claim Dossier â Hyaluronic Acid',  type: 'docx', folderId: 'f7',  version: 'v1.3', desc: 'Supporting claims for 72-hour hydration moisturiser product.', tags: ['moisturiser','hyaluronic','claims'], uploadedBy: 'u9', uploadedAt: '2026-04-02T16:00:00', starred: true,  size: '1.6 MB' },
-  { id: 'fil9',  name: 'SPF 50 Sunscreen Concept â Gen Z Line',       type: 'pptx', folderId: 'f5',  version: 'v1.0', desc: 'Concept presentation for SPF 50 sunscreen targeting Gen-Z segment.', tags: ['sunscreen','spf','genz'], uploadedBy: 'u3', uploadedAt: '2026-04-05T11:00:00', starred: false, size: '5.0 MB' },
-  // Regulatory
-  { id: 'fil10', name: 'FSSAI Compliance Checklist 2026',              type: 'xlsx', folderId: 'f8',  version: 'v4.0', desc: 'Updated checklist for FSSAI food supplement regulations 2026.', tags: ['fssai','compliance','2026'], uploadedBy: 'u4', uploadedAt: '2026-01-15T09:00:00', starred: true,  size: '0.7 MB' },
-  { id: 'fil11', name: 'Cosmetics Market Approval â EU',               type: 'pdf',  folderId: 'f9',  version: 'v1.0', desc: 'EU CPNP notification documents for cosmetic product registration.', tags: ['eu','cpnp','cosmetics'], uploadedBy: 'u4', uploadedAt: '2026-02-20T14:30:00', starred: false, size: '3.4 MB' },
-  { id: 'fil12', name: 'Label Review â Protein Bar SKU Matrix',        type: 'xlsx', folderId: 'f10', version: 'v2.2', desc: 'Final label review with nutrition claims for 8-SKU protein bar line.', tags: ['label','protein','sku'], uploadedBy: 'u4', uploadedAt: '2026-03-30T12:00:00', starred: false, size: '1.1 MB' },
-  // PMO
-  { id: 'fil13', name: 'Q2 NPD Stage Gate Tracker',                   type: 'xlsx', folderId: 'f11', version: 'v5.1', desc: 'Live stage gate tracker for all Q2 NPD projects across categories.', tags: ['stagegate','q2','tracker'], uploadedBy: 'u5', uploadedAt: '2026-04-08T08:00:00', starred: true,  size: '1.3 MB' },
-  { id: 'fil14', name: 'FY26 NPD Master Timeline',                    type: 'xlsx', folderId: 'f12', version: 'v2.0', desc: 'Full-year product development timeline with milestones and owners.', tags: ['timeline','fy26','master'], uploadedBy: 'u5', uploadedAt: '2026-04-03T09:00:00', starred: false, size: '1.8 MB' },
-  { id: 'fil15', name: 'ManFuel Protein Launch Checklist',             type: 'docx', folderId: 'f13', version: 'v1.4', desc: 'Pre-launch checklist covering regulatory, ops, and marketing tasks.', tags: ['launch','manfuel','protein'], uploadedBy: 'u10', uploadedAt: '2026-04-07T10:00:00', starred: true,  size: '0.6 MB' },
-  // R&D Lab
-  { id: 'fil16', name: 'Collagen Gummy Trial Report #7',               type: 'pdf',  folderId: 'f14', version: 'v1.0', desc: 'Lab trial report for collagen gummy formulation â texture optimization.', tags: ['collagen','gummy','trial'], uploadedBy: 'u6', uploadedAt: '2026-03-25T15:30:00', starred: false, size: '2.0 MB' },
-  { id: 'fil17', name: 'Tablet Coating SOP â Standard Line',           type: 'pdf',  folderId: 'f15', version: 'v3.2', desc: 'Standard operating procedure for film coating on tablet line 2.', tags: ['sop','coating','tablet'], uploadedBy: 'u7', uploadedAt: '2026-03-10T11:00:00', starred: false, size: '1.2 MB' },
-  { id: 'fil18', name: 'Zinc Picolinate COA â Batch ZP240',            type: 'pdf',  folderId: 'f16', version: 'v1.0', desc: 'Certificate of Analysis for Zinc Picolinate raw material batch.', tags: ['zinc','coa','rawmaterial'], uploadedBy: 'u6', uploadedAt: '2026-04-04T09:30:00', starred: true,  size: '0.4 MB' },
-  { id: 'fil19', name: 'Biotin 10000mcg Softgel Trial Report',         type: 'docx', folderId: 'f14', version: 'v2.1', desc: 'Comparative trial for softgel vs. tablet biotin bioavailability.', tags: ['biotin','softgel','trial'], uploadedBy: 'u7', uploadedAt: '2026-04-06T14:00:00', starred: false, size: '1.7 MB' },
-  { id: 'fil20', name: 'Encapsulation SOP â Liquid Fill Capsules',     type: 'pdf',  folderId: 'f15', version: 'v1.0', desc: 'SOP for liquid fill hard capsule manufacturing line.', tags: ['sop','encapsulation','liquidfill'], uploadedBy: 'u6', uploadedAt: '2026-04-09T08:30:00', starred: false, size: '0.9 MB' },
+export const INITIAL_USERS = [
+  { id: 'u1', name: 'Aditya Rane', email: 'aditya@mosaicwellness.in', role: 'admin', avatar: 'AR', title: 'IT Admin', dept: 'IT' },
+  { id: 'u2', name: 'Darshani', email: 'darshani@mosaicwellness.in', role: 'nutra_lead', avatar: 'DA', title: 'Nutraceuticals Lead', dept: 'R&D' },
+  { id: 'u3', name: 'Kapil', email: 'kapil@mosaicwellness.in', role: 'pc_lead', avatar: 'KA', title: 'Personal Care Lead', dept: 'R&D' },
+  { id: 'u4', name: 'Supriya', email: 'supriya@mosaicwellness.in', role: 'reg_lead', avatar: 'SU', title: 'Regulatory Lead', dept: 'Compliance' },
+  { id: 'u5', name: 'Vaishnavi', email: 'vaishnavi@mosaicwellness.in', role: 'pmo', avatar: 'VA', title: 'PMO Manager', dept: 'PMO' },
+  { id: 'u6', name: 'Anish', email: 'anish@mosaicwellness.in', role: 'rd_member', avatar: 'AN', title: 'R&D Analyst', dept: 'R&D' },
 ];
 
-export const CHATBOT_SYSTEM_PROMPT = `You are the NPD Librarian for Mosaic Wellness â an expert AI assistant for the New Product Development (NPD) team's central document library.
+export function buildDefaultMatrix(users) {
+  const m = {};
+  users.forEach(u => {
+    m[u.id] = {};
+    FOLDER_TREE.forEach(section => {
+      section.folders.forEach(folder => {
+        m[u.id][folder.id] = folder.access[u.role] ?? ACCESS.NONE;
+      });
+    });
+  });
+  return m;
+}
 
-Your role:
-- Help team members find documents, formulations, compliance info, and project files
-- Answer questions about NPD processes, regulatory requirements (FSSAI, EU CPNP, etc.), ingredients, and formulation best practices
-- Guide users on document naming conventions, version control, and library structure
-- Summarize what's available in the library and help prioritize review
+export function canAccess(userId, folderId, matrix, level = ACCESS.VIEW) {
+  return (matrix?.[userId]?.[folderId] ?? 0) >= level;
+}
 
-Current library has sections: Nutraceuticals, Personal Care, Regulatory, PMO/Project Mgmt, R&D Lab
-Total: 20 documents across 16 folders
+export function canView(userId, folderId, matrix) {
+  return canAccess(userId, folderId, matrix, ACCESS.VIEW);
+}
 
-Be concise, professional, and helpful. If asked about a specific document, explain you can only show what's in the visible library. Respond in 2-4 sentences unless a detailed answer is clearly needed.`;
+export function canEdit(userId, folderId, matrix) {
+  return canAccess(userId, folderId, matrix, ACCESS.EDIT);
+}
+
+export function getUserSections(userId, matrix) {
+  return FOLDER_TREE.filter(section =>
+    section.folders.some(folder => canView(userId, folder.id, matrix))
+  );
+}
+
+export const FILE_TYPE_CONFIG = {
+  pdf:  { label: 'PDF',   color: '#ef4444', bg: 'rgba(239,68,68,0.12)' },
+  docx: { label: 'DOC',   color: '#3b82f6', bg: 'rgba(59,130,246,0.12)' },
+  xlsx: { label: 'XLSX',  color: '#22c55e', bg: 'rgba(34,197,94,0.12)' },
+  pptx: { label: 'PPT',   color: '#f97316', bg: 'rgba(249,115,22,0.12)' },
+  png:  { label: 'IMG',   color: '#a855f7', bg: 'rgba(168,85,247,0.12)' },
+  jpg:  { label: 'IMG',   color: '#a855f7', bg: 'rgba(168,85,247,0.12)' },
+  other:{ label: 'FILE',  color: '#6b7280', bg: 'rgba(107,114,128,0.12)' },
+};
+
+export function getFileType(filename) {
+  const ext = filename.split('.').pop()?.toLowerCase();
+  return FILE_TYPE_CONFIG[ext] || FILE_TYPE_CONFIG.other;
+}
