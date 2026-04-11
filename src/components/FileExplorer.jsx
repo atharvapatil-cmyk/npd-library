@@ -94,7 +94,7 @@ export default function FileExplorer({
           <h2>{section.name}</h2>
           {activeFolder && (
             <>
-              <span className="explorer-sep">âº</span>
+              <span className="explorer-sep">/</span>
               <span className="explorer-folder-name">
                 {section.folders.find(f => f.id === activeFolder)?.name}
               </span>
