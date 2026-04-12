@@ -363,3 +363,8 @@ export function getFileType(filename) {
   const ext = filename.split('.').pop()?.toLowerCase();
   return FILE_TYPE_CONFIG[ext] || FILE_TYPE_CONFIG.other;
 }
+
+
+// Aliases for backward-compatible imports
+export const USERS = INITIAL_USERS;
+export function getAccessMatrix() { return buildDefaultMatrix(INITIAL_USERS); }
