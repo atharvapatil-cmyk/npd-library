@@ -1,159 +1,179 @@
 import { useState } from 'react';
-import { FOLDER_TREE, canView, canEdit } from '../data/data.js';
+import { FOLDER_TREE, canView, canEdit, getFileType } from '../data/data.js';
 
-const SAMPLE_FILES = {
-  'formulations': [
-    { id: 'f1', name: 'Ashwagandha Extract Specs v3.pdf', type: 'pdf', size: '2.4 MB', updated: '2 days ago', author: 'Darshani' },
-    { id: 'f2', name: 'Collagen Peptides Research.docx', type: 'docx', size: '1.1 MB', updated: '5 days ago', author: 'Ritu' },
-    { id: 'f3', name: 'Omega-3 Stability Data.xlsx', type: 'xlsx', size: '0.8 MB', updated: '1 week ago', author: 'Darshani' },
-  ],
-  'stability': [
-    { id: 'f4', name: 'Stability Protocol 2025 Q1.pdf', type: 'pdf', size: '3.2 MB', updated: '3 days ago', author: 'Darshani' },
-    { id: 'f5', name: 'Accelerated Study Results.xlsx', type: 'xlsx', size: '1.8 MB', updated: '1 week ago', author: 'Ritu' },
-  ],
-  'regulatory': [
-    { id: 'f6', name: 'FSSAI Compliance Checklist.pdf', type: 'pdf', size: '0.9 MB', updated: '1 day ago', author: 'Priya' },
-    { id: 'f7', name: 'Label Claims Matrix 2025.xlsx', type: 'xlsx', size: '1.4 MB', updated: '4 days ago', author: 'Priya' },
-  ],
+const TYPE_COLORS = {
+  pdf: '#dc2626',
+  excel: '#16a34a',
+  word: '#2563eb',
+  image: '#7c3aed',
+  default: '#6b7280',
 };
 
-const FILE_ICONS = {
-  pdf: { bg: 'rgba(239,68,68,0.12)', color: '#ef4444', label: 'PDF' },
-  docx: { bg: 'rgba(59,130,246,0.12)', color: '#3b82f6', label: 'DOC' },
-  xlsx: { bg: 'rgba(34,197,94,0.12)', color: '#22c55e', label: 'XLS' },
-  pptx: { bg: 'rgba(249,115,22,0.12)', color: '#f97316', label: 'PPT' },
-  default: { bg: 'rgba(107,114,128,0.12)', color: '#6b7280', label: 'FILE' },
-};
+function FileIcon({ name }) {
+  const ext = (name || '').split('.').pop().toLowerCase();
+  const color = ext === 'pdf' ? TYPE_COLORS.pdf
+    : ['xlsx','xls','csv'].includes(ext) ? TYPE_COLORS.excel
+    : ['doc','docx'].includes(ext) ? TYPE_COLORS.word
+    : ['png','jpg','jpeg','gif'].includes(ext) ? TYPE_COLORS.image
+    : TYPE_COLORS.default;
 
-function FileCard({ file, onSelect }) {
-  const icon = FILE_ICONS[file.type] || FILE_ICONS.default;
   return (
-    <div className="file-card" onClick={() => onSelect(file)}>
-      <div className="file-card-icon" style={{ background: icon.bg, color: icon.color }}>
-        {icon.label}
-      </div>
-      <div className="file-card-info">
-        <div className="file-card-name">{file.name}</div>
-        <div className="file-card-meta">
-          <span>{file.size}</span>
-          <span className="meta-sep">Â·</span>
-          <span>{file.updated}</span>
-          <span className="meta-sep">Â·</span>
-          <span>{file.author}</span>
-        </div>
-      </div>
-      <div className="file-card-actions">
-        <button className="file-action-btn" title="Download" onClick={e => e.stopPropagation()}>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M7 1V9M4 6L7 9L10 6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M1 11H13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-          </svg>
-        </button>
-      </div>
-    </div>
+    <svg width="20" height="24" viewBox="0 0 20 24" fill="none">
+      <path d="M3 3C3 1.9 3.9 1 5 1H13L19 7V21C19 22.1 18.1 23 17 23H5C3.9 23 3 22.1 3 21V3Z" fill={color + '20'} stroke={color} strokeWidth="1.4"/>
+      <path d="M13 1V7H19" stroke={color} strokeWidth="1.4" strokeLinejoin="round"/>
+      <text x="10" y="17" textAnchor="middle" fill={color} fontSize="5.5" fontWeight="700" fontFamily="sans-serif">
+        {ext.toUpperCase().slice(0,3)}
+      </text>
+    </svg>
+  );
+}
+
+function FolderIcon({ color }) {
+  return (
+    <svg width="40" height="34" viewBox="0 0 40 34" fill="none">
+      <path d="M2 8C2 6.34 3.34 5 5 5H15L18 8H35C36.66 8 38 9.34 38 11V29C38 30.66 36.66 32 35 32H5C3.34 32 2 30.66 2 29V8Z" fill={(color || '#16a34a') + '20'} stroke={color || '#16a34a'} strokeWidth="1.6"/>
+    </svg>
   );
 }
 
 export default function FileExplorer({
-  currentUser, accessMatrix, activeSection, activeFolder,
-  searchQuery, onNavigate, onUpload
+  section,
+  currentUser,
+  accessMatrix,
+  activeFolder,
+  onFolderClick,
+  onBack,
 }) {
   const [selectedFile, setSelectedFile] = useState(null);
-  const isAdmin = currentUser.role === 'admin';
 
-  const section = FOLDER_TREE.find(s => s.id === activeSection);
   if (!section) {
     return (
       <div className="explorer-empty">
-        <div className="explorer-empty-icon">F</div>
-        <div>Select a section from the sidebar</div>
+        <div className="explorer-empty-icon">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <path d="M6 12C6 9.8 7.8 8 10 8H20L24 12H38C40.2 12 42 13.8 42 16V36C42 38.2 40.2 40 38 40H10C7.8 40 6 38.2 6 36V12Z" stroke="#d1d5db" strokeWidth="2"/>
+          </svg>
+        </div>
+        <p>Select a section from the sidebar to browse files.</p>
       </div>
     );
   }
 
-  const visibleFolders = activeFolder
-    ? section.folders.filter(f => f.id === activeFolder)
-    : section.folders.filter(f => isAdmin || canView(currentUser.id, f.id, accessMatrix));
+  const allFolders = (section.folders || []).filter(f =>
+    canView(currentUser.id, f.id, accessMatrix)
+  );
 
-  const getFiles = (folderId) => {
-    const files = SAMPLE_FILES[folderId] || [
-      { id: `${folderId}-1`, name: 'Document Overview.pdf', type: 'pdf', size: '1.2 MB', updated: '3 days ago', author: currentUser.name },
-      { id: `${folderId}-2`, name: 'Reference Data.xlsx', type: 'xlsx', size: '0.6 MB', updated: '1 week ago', author: currentUser.name },
-    ];
-    if (!searchQuery) return files;
-    return files.filter(f => f.name.toLowerCase().includes(searchQuery.toLowerCase()));
-  };
+  if (!activeFolder) {
+    return (
+      <div className="file-explorer">
+        <div className="explorer-header">
+          <div className="explorer-title">
+            <span className="explorer-dot" style={{ background: section.color || '#16a34a' }}/>
+            <span className="explorer-folder-name">{section.name}</span>
+            <span className="explorer-sep">/</span>
+            <span style={{ color: '#6b7280', fontSize: '14px' }}>Folders</span>
+          </div>
+          <div className="explorer-actions">
+            <span style={{ fontSize: '13px', color: '#9ca3af' }}>
+              {allFolders.length} folder{allFolders.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+        </div>
 
-  const hasEdit = (folderId) => isAdmin || canEdit(currentUser.id, folderId, accessMatrix);
+        {allFolders.length === 0 ? (
+          <div className="explorer-empty">
+            <p>No folders accessible in this section.</p>
+          </div>
+        ) : (
+          <div className="folder-grid">
+            {allFolders.map(folder => (
+              <button
+                key={folder.id}
+                className="folder-card"
+                onClick={() => onFolderClick(folder)}
+              >
+                <div className="folder-card-icon">
+                  <FolderIcon color={section.color} />
+                </div>
+                <div className="folder-card-name">{folder.name}</div>
+                <div className="folder-card-meta">
+                  {(folder.files || []).length} file{(folder.files || []).length !== 1 ? 's' : ''}
+                  {folder.lead && <span> &middot; {folder.lead}</span>}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const folder = activeFolder;
+  const canEditFolder = canEdit(currentUser.id, folder.id, accessMatrix);
+  const files = folder.files || [];
 
   return (
     <div className="file-explorer">
       <div className="explorer-header">
         <div className="explorer-title">
-          <div className="explorer-dot" style={{ background: section.color }} />
-          <h2>{section.name}</h2>
-          {activeFolder && (
-            <>
-              <span className="explorer-sep">/</span>
-              <span className="explorer-folder-name">
-                {section.folders.find(f => f.id === activeFolder)?.name}
-              </span>
-            </>
-          )}
+          <button className="back-btn" onClick={onBack} title="Back to folders">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+          <span className="explorer-dot" style={{ background: section.color || '#16a34a' }}/>
+          <span className="explorer-folder-name">{section.name}</span>
+          <span className="explorer-sep">/</span>
+          <span className="explorer-folder-name">{folder.name}</span>
         </div>
         <div className="explorer-actions">
-          {activeFolder && hasEdit(activeFolder) && (
-            <button className="btn btn-primary btn-sm" onClick={onUpload}>
-              Upload
-            </button>
-          )}
-          {activeFolder && (
-            <button className="btn btn-ghost btn-sm" onClick={() => onNavigate(activeSection)}>
-              All Folders
+          {canEditFolder && (
+            <button className="btn btn-primary btn-sm">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{marginRight:'4px'}}>
+                <path d="M6 1V11M1 6H11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+              </svg>
+              Add File
             </button>
           )}
         </div>
       </div>
 
-      {!activeFolder ? (
-        <div className="folder-grid">
-          {visibleFolders.map(folder => (
-            <div
-              key={folder.id}
-              className="folder-card"
-              onClick={() => onNavigate(activeSection, folder.id)}
-              style={{ '--folder-color': section.color }}
-            >
-              <div className="folder-card-icon">
-                <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                  <path d="M3 7C3 5.9 3.9 5 5 5H11L13 7H23C24.1 7 25 7.9 25 9V21C25 22.1 24.1 23 23 23H5C3.9 23 3 22.1 3 21V7Z"
-                    fill={section.color + '22'} stroke={section.color} strokeWidth="1.5"/>
-                </svg>
-              </div>
-              <div className="folder-card-name">{folder.name}</div>
-              <div className="folder-card-meta">
-                {getFiles(folder.id).length} files
-              </div>
-            </div>
-          ))}
-          {visibleFolders.length === 0 && (
-            <div className="explorer-empty">
-              <div className="explorer-empty-icon">L</div>
-              <div>No accessible folders in this section</div>
-            </div>
-          )}
+      {files.length === 0 ? (
+        <div className="explorer-empty">
+          <p>No files in this folder yet.</p>
         </div>
       ) : (
         <div className="file-list">
-          {getFiles(activeFolder).map(file => (
-            <FileCard key={file.id} file={file} onSelect={setSelectedFile} />
-          ))}
-          {getFiles(activeFolder).length === 0 && (
-            <div className="explorer-empty">
-              <div className="explorer-empty-icon">S</div>
-              <div>No files match your search</div>
+          {files.map((file, i) => (
+            <div key={i} className="file-card" onClick={() => setSelectedFile(file)}>
+              <div className="file-card-icon">
+                <FileIcon name={file.name} />
+              </div>
+              <div className="file-card-info">
+                <div className="file-card-name">{file.name}</div>
+                <div className="file-card-meta">
+                  {folder.name}
+                  {file.tag && <><span className="meta-sep">Â·</span>{file.tag}</>}
+                </div>
+              </div>
+              <div className="file-card-actions">
+                <button className="file-action-btn" title="View" onClick={e => { e.stopPropagation(); setSelectedFile(file); }}>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <circle cx="7" cy="7" r="2.5" stroke="currentColor" strokeWidth="1.3"/>
+                    <path d="M1 7C1 7 3 3 7 3C11 3 13 7 13 7C13 7 11 11 7 11C3 11 1 7 1 7Z" stroke="currentColor" strokeWidth="1.3"/>
+                  </svg>
+                </button>
+                {canEditFolder && (
+                  <button className="file-action-btn" title="Download" onClick={e => e.stopPropagation()}>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <path d="M7 1V9M7 9L4 6M7 9L10 6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M2 12H12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                    </svg>
+                  </button>
+                )}
+              </div>
             </div>
-          )}
+          ))}
         </div>
       )}
 
@@ -162,31 +182,31 @@ export default function FileExplorer({
           <div className="file-detail-panel" onClick={e => e.stopPropagation()}>
             <div className="file-detail-header">
               <div className="file-detail-title">{selectedFile.name}</div>
-              <button className="file-detail-close" onClick={() => setSelectedFile(null)}>x</button>
+              <button className="file-detail-close" onClick={() => setSelectedFile(null)}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M2 2L14 14M14 2L2 14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                </svg>
+              </button>
             </div>
             <div className="file-detail-body">
               <div className="file-detail-row">
-                <span className="file-detail-label">Type</span>
-                <span>{selectedFile.type?.toUpperCase()}</span>
+                <span className="file-detail-label">Section</span>
+                <span>{section.name}</span>
               </div>
               <div className="file-detail-row">
-                <span className="file-detail-label">Size</span>
-                <span>{selectedFile.size}</span>
+                <span className="file-detail-label">Folder</span>
+                <span>{folder.name}</span>
               </div>
-              <div className="file-detail-row">
-                <span className="file-detail-label">Last Updated</span>
-                <span>{selectedFile.updated}</span>
-              </div>
-              <div className="file-detail-row">
-                <span className="file-detail-label">Author</span>
-                <span>{selectedFile.author}</span>
-              </div>
+              {selectedFile.tag && (
+                <div className="file-detail-row">
+                  <span className="file-detail-label">Tags</span>
+                  <span>{selectedFile.tag}</span>
+                </div>
+              )}
             </div>
             <div className="file-detail-actions">
-              <button className="btn btn-primary">Download</button>
-              {activeFolder && hasEdit(activeFolder) && (
-                <button className="btn btn-ghost">Edit</button>
-              )}
+              <button className="btn btn-primary">Open File</button>
+              {canEditFolder && <button className="btn btn-ghost">Download</button>}
             </div>
           </div>
         </div>
