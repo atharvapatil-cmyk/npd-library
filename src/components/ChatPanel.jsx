@@ -1,151 +1,195 @@
 import { useState, useRef, useEffect } from 'react';
-import { FOLDER_TREE } from '../data/data.js';
+import { FOLDER_TREE, canView } from '../data/data.js';
 
-const BOT_COLOR = '#16a34a';
-
-function buildIndex() {
+function buildIndex(currentUser, accessMatrix) {
   const idx = [];
   (FOLDER_TREE || []).forEach(sec => {
     (sec.folders || []).forEach(folder => {
-      idx.push({ type: 'folder', section: sec.name, folder: folder.name, path: sec.name + ' / ' + folder.name, files: folder.files || [] });
-      (folder.files || []).forEach(file => {
-        idx.push({ type: 'file', section: sec.name, folder: folder.name, name: file.name, tag: file.tag || '', path: sec.name + ' / ' + folder.name + ' / ' + file.name });
+      const hasAccess = canView(currentUser.id, folder.id, accessMatrix);
+      idx.push({
+        type: 'folder',
+        section: sec.name,
+        folder: folder.name,
+        path: sec.name + ' / ' + folder.name,
+        files: folder.files || [],
+        accessible: hasAccess,
       });
+      if (hasAccess) {
+        (folder.files || []).forEach(file => {
+          idx.push({
+            type: 'file',
+            section: sec.name,
+            folder: folder.name,
+            name: file.name,
+            tag: file.tag || '',
+            path: sec.name + ' / ' + folder.name + ' / ' + file.name,
+            accessible: true,
+          });
+        });
+      }
     });
   });
   return idx;
 }
 
 function searchDocs(query, idx) {
-  const q = (query || '').toLowerCase();
-  if (!q || q.length < 2) return [];
-  return idx.filter(item =>
-    item.path.toLowerCase().includes(q) ||
-    (item.tag && item.tag.toLowerCase().includes(q)) ||
-    (item.name && item.name.toLowerCase().includes(q)) ||
-    item.section.toLowerCase().includes(q) ||
-    item.folder.toLowerCase().includes(q)
-  );
+  if (!query || !query.trim()) return [];
+  const q = query.toLowerCase().trim();
+  const words = q.split(/\s+/);
+  return idx.filter(item => {
+    if (!item.accessible) return false;
+    const searchable = [item.path, item.name || '', item.tag || '', item.folder || '', item.section || '']
+      .join(' ').toLowerCase();
+    return words.every(w => searchable.includes(w));
+  }).slice(0, 8);
 }
 
 function getResponse(msg, idx) {
-  const m = (msg || '').toLowerCase().trim();
-  if (!m) return { text: 'Type something and I will help!', results: [] };
+  const q = msg.toLowerCase().trim();
 
-  const totalFiles = idx.filter(i => i.type === 'file').length;
-  const totalFolders = idx.filter(i => i.type === 'folder').length;
-  const secCount = (FOLDER_TREE || []).length;
-
-  if (/^(hi|hello|hey|heyy|good|namaste|sup|yo)/.test(m)) {
-    return { text: "Hi there! I'm Lib, your NPD Document Librarian.\n\nI know " + totalFiles + " files across " + totalFolders + " folders in " + secCount + " sections.\n\nTry asking me:\n- Where is the COA document?\n- What is in Regulatory?\n- Find formulation specs\n- List all sections", results: [] };
+  const greetings = ['hello', 'hi', 'hey', 'help', 'start'];
+  if (greetings.some(g => q === g || q.startsWith(g + ' '))) {
+    return {
+      text: "Hi! I'm Lib, your NPD Document Librarian. I know the entire document library. Try asking me:\n- \"find formulation docs\"\n- \"where are stability studies?\"\n- \"show regulatory files\"\n- \"list all sections\"",
+      results: [],
+    };
   }
 
-  if (/help|what can|how do|guide/.test(m)) {
-    const secs = (FOLDER_TREE || []).map(s => s.name).join(', ');
-    return { text: "I can help you navigate:\n\nSections: " + secs + "\n\nJust describe what you need in plain words and I will find it!", results: [] };
+  if (q.includes('list section') || q.includes('show section') || q.includes('all section')) {
+    const sections = [...new Set(idx.filter(i => i.accessible).map(i => i.section))];
+    return {
+      text: `Here are the sections you have access to (${sections.length} total):`,
+      results: sections.map(s => ({ type: 'section', name: s, path: s })),
+    };
   }
 
-  if (/list.*section|show.*section|all section|what section/.test(m)) {
-    const lines = (FOLDER_TREE || []).map(s => s.name + ' -- ' + (s.folders || []).length + ' folders').join('\n');
-    return { text: "All sections in the library:\n\n" + lines, results: [] };
+  if (q.includes('list folder') || q.includes('show folder') || q.includes('all folder')) {
+    const folders = idx.filter(i => i.type === 'folder' && i.accessible).slice(0, 8);
+    if (!folders.length) return { text: "No folders found in your accessible areas.", results: [] };
+    return { text: `Found ${folders.length} folders:`, results: folders };
   }
 
-  const hits = searchDocs(msg, idx);
-  if (hits.length === 0) {
-    return { text: 'Could not find "' + msg + '" in the library.\n\nTry searching by section name, document type (COA, SOP, TDS), or topic like "formulation" or "regulatory".', results: [] };
-  }
-  if (hits.length === 1) {
-    const h = hits[0];
-    if (h.type === 'file') {
-      return { text: 'Found it! "' + h.name + '" is located in:\n' + h.path + (h.tag ? '\n\nDescription: ' + h.tag : ''), results: [h] };
+  const results = searchDocs(msg, idx);
+  if (results.length > 0) {
+    const files = results.filter(r => r.type === 'file');
+    const folders = results.filter(r => r.type === 'folder');
+    let text = `Found ${results.length} result${results.length !== 1 ? 's' : ''} for "${msg}":`;
+    if (files.length && folders.length) {
+      text = `Found ${files.length} file${files.length !== 1 ? 's' : ''} and ${folders.length} folder${folders.length !== 1 ? 's' : ''} matching "${msg}":`;
     }
-    return { text: 'Found the folder "' + h.folder + '" in ' + h.section + '.\nIt contains ' + h.files.length + ' file(s).', results: [h] };
+    return { text, results };
   }
-  const preview = hits.slice(0, 5);
-  const moreCount = hits.length - 5;
-  const label = hits.length > 5 ? 'Top 5 of ' + hits.length + ' results for "' + msg + '"' : hits.length + ' result(s) for "' + msg + '"';
-  return { text: label + (moreCount > 0 ? '\n+' + moreCount + ' more -- try a more specific query' : ''), results: preview };
+
+  return {
+    text: `I couldn't find anything matching "${msg}" in your accessible documents. Try different keywords, or ask me to "list sections" to browse.`,
+    results: [],
+  };
 }
 
-const INIT_MSGS = [
-  { id: 1, from: 'bot', text: "Hi! I'm Lib, your NPD Document Librarian.\n\nAsk me to find any file or folder -- I know the whole library. What do you need?" }
-];
-
-export default function ChatPanel({ currentUser, activeSection, onClose }) {
-  const [msgs, setMsgs] = useState(INIT_MSGS);
+export default function ChatPanel({ onClose, currentUser, accessMatrix }) {
+  const [messages, setMessages] = useState([
+    {
+      id: 1,
+      from: 'bot',
+      text: "Hi! I'm Lib, your NPD Document Librarian.\nAsk me to find any file or folder â I know the whole library.",
+      results: [],
+    },
+  ]);
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
   const bottomRef = useRef(null);
-  const idx = useRef([]);
+  const inputRef = useRef(null);
 
-  useEffect(() => { idx.current = buildIndex(); }, []);
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [msgs, typing]);
+  const idx = buildIndex(currentUser || { id: '' }, accessMatrix || {});
 
-  function send() {
-    const txt = input.trim();
-    if (!txt) return;
-    setMsgs(prev => [...prev, { id: Date.now(), from: 'user', text: txt }]);
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, typing]);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const send = (text) => {
+    const trimmed = (text || input).trim();
+    if (!trimmed) return;
+    const userMsg = { id: Date.now(), from: 'user', text: trimmed, results: [] };
+    setMessages(prev => [...prev, userMsg]);
     setInput('');
     setTyping(true);
+
     setTimeout(() => {
-      const resp = getResponse(txt, idx.current);
-      setMsgs(prev => [...prev, { id: Date.now() + 1, from: 'bot', text: resp.text, results: resp.results }]);
+      const response = getResponse(trimmed, idx);
+      const botMsg = { id: Date.now() + 1, from: 'bot', ...response };
+      setMessages(prev => [...prev, botMsg]);
       setTyping(false);
-    }, 500 + Math.random() * 400);
-  }
+    }, 600);
+  };
 
-  function handleKey(e) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
-  }
+  const handleKey = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      send();
+    }
+  };
 
-  const user = currentUser || {};
-  const userColor = user.color || '#6b7280';
-  const rawInitials = (user.avatar || (user.name || 'U').substring(0, 2)).toString();
-  const userInitials = rawInitials.replace(/[^\x20-\x7E]/g, '').substring(0, 2).toUpperCase() || 'U';
-
-  const totalFolders = (FOLDER_TREE || []).reduce((a, s) => a + (s.folders || []).length, 0);
+  const QUICK = ['find formulation docs', 'show stability studies', 'list sections', 'regulatory files'];
 
   return (
     <div className="chat-panel">
       <div className="chat-header">
         <div className="chat-header-info">
-          <div className="chat-bot-avatar">L</div>
+          <div className="chat-avatar-lib">L</div>
           <div>
-            <div className="chat-title">Lib -- Document Librarian</div>
-            <div className="chat-context">{activeSection ? 'Context: ' + activeSection : 'Knows all ' + totalFolders + ' folders'}</div>
+            <div className="chat-title">Lib</div>
+            <div className="chat-subtitle">Document Librarian</div>
           </div>
         </div>
-        <button className="chat-close" onClick={onClose}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <button className="chat-close" onClick={onClose} title="Close">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M2 2L14 14M14 2L2 14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+          </svg>
         </button>
       </div>
 
-      <div className="chat-messages">
-        {msgs.map(m => (
-          <div key={m.id} className={'chat-bubble ' + (m.from === 'user' ? 'chat-bubble-user' : 'chat-bubble-bot')}>
-            {m.from === 'bot' && (
-              <div className="chat-avatar" style={{ background: BOT_COLOR }}>L</div>
+      <div className="chat-body">
+        {messages.map(msg => (
+          <div key={msg.id} className={`chat-msg chat-msg-${msg.from}`}>
+            {msg.from === 'bot' && (
+              <div className="chat-msg-avatar">L</div>
             )}
-            <div className="chat-bubble-body">
-              {m.from === 'bot' && <div className="chat-author">Lib</div>}
-              <div className={'chat-text' + (m.from === 'user' ? ' chat-text-user' : '')}>
-                {m.text.split('\n').map((line, i, arr) => (
-                  <span key={i}>{line}{i < arr.length - 1 && <br/>}</span>
+            <div className="chat-msg-content">
+              <div className="chat-msg-bubble">
+                {msg.text.split('\n').map((line, i) => (
+                  <span key={i}>{line}{i < msg.text.split('\n').length - 1 && <br/>}</span>
                 ))}
               </div>
-              {m.results && m.results.length > 0 && (
+              {msg.results && msg.results.length > 0 && (
                 <div className="chat-results">
-                  {m.results.map((r, i) => (
+                  {msg.results.map((r, i) => (
                     <div key={i} className="chat-result-card">
                       <div className="chat-result-icon">
-                        {r.type === 'file'
-                          ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                          : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-                        }
+                        {r.type === 'file' ? (
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <rect x="2" y="1" width="10" height="12" rx="1.5" stroke="#16a34a" strokeWidth="1.3"/>
+                            <path d="M4 5h6M4 7h4M4 9h5" stroke="#16a34a" strokeWidth="1.2" strokeLinecap="round"/>
+                          </svg>
+                        ) : r.type === 'section' ? (
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <rect x="1" y="1" width="4.5" height="4.5" rx="1" stroke="#16a34a" strokeWidth="1.2"/>
+                            <rect x="8.5" y="1" width="4.5" height="4.5" rx="1" stroke="#16a34a" strokeWidth="1.2"/>
+                            <rect x="1" y="8.5" width="4.5" height="4.5" rx="1" stroke="#16a34a" strokeWidth="1.2"/>
+                            <rect x="8.5" y="8.5" width="4.5" height="4.5" rx="1" stroke="#16a34a" strokeWidth="1.2"/>
+                          </svg>
+                        ) : (
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M1 4C1 3.45 1.45 3 2 3H5.5L7 4.5H12C12.55 4.5 13 4.95 13 5.5V11C13 11.55 12.55 12 12 12H2C1.45 12 1 11.55 1 11V4Z" stroke="#16a34a" strokeWidth="1.3"/>
+                          </svg>
+                        )}
                       </div>
                       <div className="chat-result-info">
-                        <div className="chat-result-name">{r.type === 'file' ? r.name : r.folder}</div>
-                        <div className="chat-result-path">{r.section}{r.type === 'file' ? ' / ' + r.folder : ''}</div>
+                        <div className="chat-result-name">{r.name || r.folder || r.section}</div>
+                        <div className="chat-result-path">{r.path}</div>
                         {r.tag && <div className="chat-result-tag">{r.tag}</div>}
                       </div>
                     </div>
@@ -153,33 +197,43 @@ export default function ChatPanel({ currentUser, activeSection, onClose }) {
                 </div>
               )}
             </div>
-            {m.from === 'user' && (
-              <div className="chat-avatar" style={{ background: userColor }}>{userInitials}</div>
-            )}
           </div>
         ))}
+
         {typing && (
-          <div className="chat-bubble chat-bubble-bot">
-            <div className="chat-avatar" style={{ background: BOT_COLOR }}>L</div>
-            <div className="chat-bubble-body">
-              <div className="chat-typing"><span/><span/><span/></div>
+          <div className="chat-msg chat-msg-bot">
+            <div className="chat-msg-avatar">L</div>
+            <div className="chat-typing">
+              <span/><span/><span/>
             </div>
           </div>
         )}
         <div ref={bottomRef}/>
       </div>
 
-      <div className="chat-input-area">
-        <textarea
+      <div className="chat-quick">
+        {QUICK.map(q => (
+          <button key={q} className="chat-quick-btn" onClick={() => send(q)}>{q}</button>
+        ))}
+      </div>
+
+      <div className="chat-input-row">
+        <input
+          ref={inputRef}
           className="chat-input"
+          placeholder="Ask Lib to find a file..."
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKey}
-          placeholder="Ask Lib to find a document..."
-          rows={2}
         />
-        <button className="chat-send" onClick={send} disabled={!input.trim()}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        <button
+          className="chat-send"
+          onClick={() => send()}
+          disabled={!input.trim()}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M2 8L14 2L8 14L7 9L2 8Z" fill="currentColor"/>
+          </svg>
         </button>
       </div>
     </div>
