@@ -1,188 +1,210 @@
 import { useState } from 'react';
-import { FOLDER_TREE, USERS } from '../data/data.js';
 
 const LEVELS = [
-  { value: 0, label: 'No Access', short: 'None', cls: 'acc-none' },
-  { value: 1, label: 'View Only', short: 'View', cls: 'acc-view' },
-  { value: 2, label: 'Can Edit', short: 'Edit', cls: 'acc-edit' },
-  { value: 3, label: 'Admin', short: 'Admin', cls: 'acc-admin' }
+  { label: 'No Access', icon: 'ð«', bg: '#f3f4f6', color: '#6b7280', border: '#e5e7eb' },
+  { label: 'View',      icon: 'ð',  bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' },
+  { label: 'Edit',      icon: 'âï¸',  bg: '#fffbeb', color: '#b45309', border: '#fde68a' },
+  { label: 'Admin',     icon: 'â­',  bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0' },
 ];
 
-function cycleLevel(current) {
-  return (current + 1) % 4;
+function AddSectionModal({ onClose, onAdd }) {
+  const [name, setName]   = useState('');
+  const [tag,  setTag]    = useState('');
+  const [color, setColor] = useState('#6b7280');
+
+  const submit = (e) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    onAdd({ id, name: name.trim(), tag: tag.trim() || name.slice(0,4).toUpperCase(), color, folders: [] });
+    onClose();
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-box" onClick={e => e.stopPropagation()}>
+        <div className="modal-hd">
+          <div className="modal-title">â New Section</div>
+          <button className="modal-x" onClick={onClose}>â</button>
+        </div>
+        <form onSubmit={submit} className="modal-body">
+          <label className="modal-label">Section Name</label>
+          <input className="modal-input" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Clinical Trials" autoFocus/>
+          <label className="modal-label">Short Tag <span style={{color:'#9ca3af',fontWeight:400}}>(max 6 chars)</span></label>
+          <input className="modal-input" value={tag} onChange={e => setTag(e.target.value)} placeholder="e.g. CLIN" maxLength={6}/>
+          <label className="modal-label">Color</label>
+          <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>
+            <input type="color" className="modal-input" value={color} onChange={e => setColor(e.target.value)} style={{ width:'60px', height:'44px', padding:'4px', cursor:'pointer' }}/>
+            <div style={{ width:'32px', height:'32px', borderRadius:'8px', background: color, border:'2px solid #e5e7eb' }}/>
+            <span style={{ color:'var(--text-muted)', fontSize:'13px' }}>{color}</span>
+          </div>
+          <div className="modal-actions">
+            <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
+            <button type="submit" className="btn btn-primary" disabled={!name.trim()}>Create Section</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 }
 
-export default function Settings({ currentUser, accessMatrix, onAccessChange }) {
-  const user = currentUser || {};
-  const isAdmin = user.role === 'admin';
+export default function Settings({ users, sections, accessMatrix, onMatrixChange, currentUser, onAddSection, onAddFolder }) {
+  const [showAddSection, setShowAddSection] = useState(false);
+  const [filterUser, setFilterUser] = useState('all');
+  const isAdmin = currentUser?.role === 'admin';
 
-  const [activeTab, setActiveTab] = useState('matrix');
-  const [selectedUserId, setSelectedUserId] = useState((USERS || [])[0]?.id || '');
-
-  if (!isAdmin) {
-    return (
-      <div className="settings-page">
-        <div className="settings-denied">
-          <div className="settings-denied-icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          </div>
-          <div className="settings-denied-title">Admin Access Required</div>
-          <div className="settings-denied-sub">Contact your administrator to manage access settings.</div>
-        </div>
-      </div>
-    );
-  }
-
-  const selectedUser = (USERS || []).find(u => u.id === selectedUserId) || {};
-  const userMatrix = (accessMatrix || {})[selectedUserId] || {};
-
-  function setLevel(folderId, level) {
-    onAccessChange && onAccessChange(selectedUserId, folderId, level);
-  }
-
-  function setAllForUser(level) {
-    (FOLDER_TREE || []).forEach(sec => {
-      (sec.folders || []).forEach(folder => {
-        onAccessChange && onAccessChange(selectedUserId, folder.id, level);
-      });
+  const cycle = (userId, folderId) => {
+    if (!isAdmin) return;
+    const cur = accessMatrix?.[userId]?.[folderId] ?? 0;
+    const next = (cur + 1) % 4;
+    onMatrixChange({
+      ...accessMatrix,
+      [userId]: { ...(accessMatrix?.[userId] || {}), [folderId]: next },
     });
-  }
+  };
 
-  function setAllForSection(secFolders, level) {
-    secFolders.forEach(folder => {
-      onAccessChange && onAccessChange(selectedUserId, folder.id, level);
-    });
-  }
+  const filteredUsers = filterUser === 'all' ? users : users.filter(u => u.id === filterUser);
 
   return (
     <div className="settings-page">
-      <div className="settings-header">
-        <h1 className="settings-title">Access Control Matrix</h1>
-        <p className="settings-sub">Manage per-user, per-folder permissions across all sections</p>
-      </div>
-
-      <div className="settings-tabs">
-        <button className={'settings-tab' + (activeTab === 'matrix' ? ' active' : '')} onClick={() => setActiveTab('matrix')}>Access Matrix</button>
-        <button className={'settings-tab' + (activeTab === 'profiles' ? ' active' : '')} onClick={() => setActiveTab('profiles')}>User Profiles</button>
-      </div>
-
-      {activeTab === 'matrix' && (
-        <div className="access-matrix-layout">
-          <div className="access-legend">
-            {LEVELS.map(l => (
-              <div key={l.value} className="legend-item">
-                <span className={'legend-pill ' + l.cls}>{l.short}</span>
-                <span className="legend-label">{l.label}</span>
-              </div>
-            ))}
-            <div className="legend-hint">Click any permission pill to cycle through levels</div>
+      {/* Hero */}
+      <div className="settings-hero">
+        <div>
+          <div className="settings-hero-title">ð Access Control</div>
+          <div className="settings-hero-sub">
+            Click any cell to cycle: <strong>No Access</strong> â <strong>View</strong> â <strong>Edit</strong> â <strong>Admin</strong>
           </div>
+        </div>
+        {isAdmin && (
+          <button className="btn btn-primary" onClick={() => setShowAddSection(true)}>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{marginRight:'6px'}}>
+              <path d="M6 1V11M1 6H11" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
+            </svg>
+            New Section
+          </button>
+        )}
+      </div>
 
-          <div className="access-matrix-body">
-            <div className="user-selector">
-              {(USERS || []).map(u => {
-                const rawInitials = (u.avatar || (u.name || 'U').substring(0, 2)).toString();
-                const initials = rawInitials.replace(/[^\x20-\x7E]/g, '').substring(0, 2).toUpperCase() || 'U';
-                return (
-                  <button
-                    key={u.id}
-                    className={'user-chip' + (u.id === selectedUserId ? ' active' : '')}
-                    onClick={() => setSelectedUserId(u.id)}
-                  >
-                    <div className="user-chip-avatar" style={{ background: u.color || '#6b7280' }}>{initials}</div>
-                    <div className="user-chip-info">
-                      <div className="user-chip-name">{u.name}</div>
-                      <div className="user-chip-role">{u.role}</div>
-                    </div>
-                  </button>
-                );
-              })}
+      {/* User filter chips */}
+      <div className="settings-filter">
+        <span className="settings-filter-label">Filter:</span>
+        <div className="settings-filter-chips">
+          <button className={`filter-chip${filterUser === 'all' ? ' active' : ''}`} onClick={() => setFilterUser('all')}>
+            All Users
+          </button>
+          {users.map(u => (
+            <button
+              key={u.id}
+              className={`filter-chip${filterUser === u.id ? ' active' : ''}`}
+              onClick={() => setFilterUser(u.id)}
+            >
+              <span className="filter-chip-av">{u.avatar}</span>
+              {u.name.split(' ')[0]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="settings-legend">
+        {LEVELS.map(l => (
+          <div key={l.label} className="legend-item">
+            <div className="access-badge" style={{ background: l.bg, color: l.color, border: `1px solid ${l.border}` }}>
+              <span>{l.icon}</span> <span>{l.label}</span>
             </div>
+          </div>
+        ))}
+        <div style={{ marginLeft:'auto', fontSize:'12px', color:'var(--text-muted)', alignSelf:'center' }}>
+          {isAdmin ? 'ð Click any badge to change access' : 'ð View only â admin access required to change'}
+        </div>
+      </div>
 
-            <div className="matrix-panel">
-              <div className="matrix-user-header">
-                <div className="matrix-user-avatar" style={{ background: selectedUser.color || '#6b7280' }}>
-                  {((selectedUser.avatar || (selectedUser.name || 'U').substring(0,2)).toString().replace(/[^\x20-\x7E]/g,'').substring(0,2).toUpperCase()) || 'U'}
-                </div>
-                <div>
-                  <div className="matrix-user-name">{selectedUser.name}</div>
-                  <div className="matrix-user-role">{selectedUser.role}</div>
-                </div>
-                <div className="matrix-bulk-actions">
-                  <span className="matrix-bulk-label">Set all:</span>
-                  {LEVELS.map(l => (
-                    <button key={l.value} className={'matrix-bulk-btn ' + l.cls} onClick={() => setAllForUser(l.value)}>{l.short}</button>
+      {/* Sections */}
+      <div className="access-sections">
+        {sections.map(section => {
+          const folders = section.folders || [];
+          if (!folders.length) return (
+            <div key={section.id} className="access-section-card">
+              <div className="access-sec-header" style={{ '--sc': section.color || '#16a34a' }}>
+                <div className="accest-sec-dot" style={{ background: section.color }}/>
+                <span className="access-sec-name">{section.name}</span>
+                {isAdmin && (
+                  <button className="access-add-folder-btn" onClick={() => {
+                    const name = window.prompt(`New folder name for "${section.name}":`);
+                    if (name?.trim()) onAddFolder?.(section.id, {
+                      id: section.id + '-' + Date.now(),
+                      name: name.trim(), desc: '', files: [],
+                      access: { admin: 3, nutra_lead: 1, pc_lead: 1, reg_lead: 1, pmo: 1, rd_member: 1 },
+                    });
+                  }}>+ Folder</button>
+                )}
+              </div>
+              <div style={{ padding:'16px', color:'var(--text-muted)', fontSize:'13px' }}>No folders yet.</div>
+            </div>
+          );
+          return (
+            <div key={section.id} className="accest-section-card">
+              <div className="access-sec-header" style={{ '--sc': section.color || '#16a34a' }}>
+                <div className="access-sec-dot" style={{ background: section.color }}/>
+                <span className="access-sec-name">{section.name}</span>
+                <span className="accest-sec-count">{folders.length} folder{folders.length !== 1 ? 's' : ''}</span>
+                {isAdmin && (
+                  <button className="access-add-folder-btn" onClick={() => {
+                    const name = window.prompt(`New folder name for "${section.name}":`);
+                    if (name?.trim()) onAddFolder?.(section.id, {
+                      id: section.id + '-' + Date.now(),
+                      name: name.trim(), desc: '', files: [],
+                      access: { admin: 3, nutra_lead: 1, pc_lead: 1, reg_lead: 1, pmo: 1, rd_member: 1 },
+                    });
+                  }}>+ Folder</button>
+                )}
+              </div>
+
+              {/* Matrix header */}
+              <div className="access-matrix">
+                <div className="access-matrix-head">
+                  <div className="am-cell am-folder-col">Folder</div>
+                  {filteredUsers.map(u => (
+                    <div key={u.id} className="am-cell am-user-col">
+                      <div className="am-user-av">{u.avatar}</div>
+                      <div className="am-user-name">{u.name.split(' ')[0]}</div>
+                    </div>
                   ))}
                 </div>
-              </div>
 
-              <div className="matrix-sections">
-                {(FOLDER_TREE || []).map(sec => (
-                  <div key={sec.id} className="matrix-section">
-                    <div className="matrix-section-header">
-                      <div className="matrix-section-dot" style={{ background: sec.color || '#16a34a' }}/>
-                      <div className="matrix-section-name">{sec.name}</div>
-                      <div className="matrix-section-owner">{sec.owner}</div>
-                      <div className="matrix-section-bulk">
-                        {LEVELS.map(l => (
-                          <button key={l.value} className={'matrix-bulk-btn ' + l.cls} onClick={() => setAllForSection(sec.folders || [], l.value)}>{l.short}</button>
-                        ))}
-                      </div>
+                {folders.map(folder => (
+                  <div key={folder.id} className="access-matrix-row">
+                    <div className="am-cell am-folder-col">
+                      <div className="am-folder-name">{folder.name}</div>
+                      {folder.desc && <div className="am-folder-desc">{folder.desc.slice(0, 48)}{folder.desc.length > 48 ? 'â¦' : ''}</div>}
                     </div>
-                    <div className="matrix-folder-list">
-                      {(sec.folders || []).map(folder => {
-                        const currentLevel = userMatrix[folder.id] || 0;
-                        const currentLevelObj = LEVELS[currentLevel];
-                        return (
-                          <div key={folder.id} className="matrix-folder-row">
-                            <div className="matrix-folder-icon">
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-                            </div>
-                            <div className="matrix-folder-name">{folder.name}</div>
-                            <div className="matrix-access-btns">
-                              {LEVELS.map(l => (
-                                <button
-                                  key={l.value}
-                                  className={'matrix-access-btn ' + l.cls + (currentLevel === l.value ? ' active' : '')}
-                                  onClick={() => setLevel(folder.id, l.value)}
-                                  title={l.label}
-                                >{l.short}</button>
-                              ))}
-                            </div>
+                    {filteredUsers.map(u => {
+                      const level = accessMatrix?.[u.id]?.[folder.id] ?? 0;
+                      const lv = LEVELS[level];
+                      return (
+                        <div
+                          key={u.id}
+                          className={`am-cell am-badge-cell${isAdmin ? ' clickable' : ''}`}
+                          onClick={() => cycle(u.id, folder.id)}
+                          title={isAdmin ? `Click to change ${u.name.split(' ')[0]}'s access` : ''}
+                        >
+                          <div className="access-badge" style={{ background: lv.bg, color: lv.color, border: `1px solid ${lv.border}`, cursor: isAdmin ? 'pointer' : 'default' }}>
+                            <span className="ab-icon">{lv.icon}</span>
+                            <span className="ab-label">{lv.label}</span>
                           </div>
-                        );
-                      })}
-                    </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 ))}
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          );
+        })}
+      </div>
 
-      {activeTab === 'profiles' && (
-        <div className="profiles-grid">
-          {(USERS || []).map(u => {
-            const rawInitials = (u.avatar || (u.name || 'U').substring(0, 2)).toString();
-            const initials = rawInitials.replace(/[^\x20-\x7E]/g, '').substring(0, 2).toUpperCase() || 'U';
-            const userAccess = (accessMatrix || {})[u.id] || {};
-            const accessCount = Object.values(userAccess).filter(v => v > 0).length;
-            const adminCount = Object.values(userAccess).filter(v => v === 3).length;
-            return (
-              <div key={u.id} className="profile-card">
-                <div className="profile-avatar" style={{ background: u.color || '#6b7280' }}>{initials}</div>
-                <div className="profile-name">{u.name}</div>
-                <div className="profile-role">{u.role}</div>
-                <div className="profile-stats">
-                  <div className="profile-stat"><span className="profile-stat-val">{accessCount}</span><span className="profile-stat-label">folders</span></div>
-                  <div className="profile-stat"><span className="profile-stat-val">{adminCount}</span><span className="profile-stat-label">admin</span></div>
-                </div>
-                <button className="btn btn-ghost btn-sm" onClick={() => { setSelectedUserId(u.id); setActiveTab('matrix'); }}>Edit Access</button>
-              </div>
-            );
-          })}
-        </div>
+      {showAddSection && (
+        <AddSectionModal onClose={() => setShowAddSection(false)} onAdd={onAddSection}/>
       )}
     </div>
   );
