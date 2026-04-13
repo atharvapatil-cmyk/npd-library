@@ -28,7 +28,7 @@ function TeamIcon({ color }) {
       <circle cx="16" cy="6" r="3" stroke={color} strokeWidth="1.4" opacity="0.7"/>
       <path d="M13 17C13 14.8 14.3 13 16 13H19C20.1 13 21 13.9 21 15" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.7"/>
     </svg>
-  {;
+  );
 }
 
 function ActivityIcon({ color }) {
@@ -40,7 +40,7 @@ function ActivityIcon({ color }) {
   );
 }
 
-const STATECONFIGS = [
+const STAT_CONFIGS = [
   { key: 'folders', label: 'Folders Accessible', sub: 'All active',    color: '#16a34a', Icon: FolderIcon },
   { key: 'files',   label: 'Files Available',    sub: 'Your access',   color: '#2563eb', Icon: FileIcon   },
   { key: 'members', label: 'Team Members',        sub: 'All active',   color: '#7c3aed', Icon: TeamIcon   },
