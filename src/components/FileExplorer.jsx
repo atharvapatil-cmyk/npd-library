@@ -51,7 +51,7 @@ function FolderCard3D({ folder, section, onClick }) {
           <path d="M2 9C2 7.3 3.3 6 5 6H16L19.5 9H39C40.7 9 42 10.3 42 12V30C42 31.7 40.7 33 39 33H5C3.3 33 2 31.7 2 30V9Z" fill={color+'20'} stroke={color} strokeWidth="1.8"/>
           <path d="M2 14H42" stroke={color+'60'} strokeWidth="1"/>
         </svg>
-    2 </div>
+      </div>
       <div className="folder-card-name">{folder.name}</div>
       <div className="folder-card-desc">{folder.desc ? folder.desc.slice(0,55) + (folder.desc.length > 55 ? 'â¦' : '') : ''}</div>
       <div className="folder-card-footer">
@@ -247,7 +247,7 @@ export default function FileExplorer({
   };
 
   const handleNewFile = (f) => {
- if (!activeFolder) return;
+    if (!activeFolder) return;
     setLocalFiles(p => ({ ...p, [activeFolder.id]: [...(p[activeFolder.id] || []), f] }));
   };
 
@@ -271,19 +271,127 @@ export default function FileExplorer({
               </button>
             )}
             <span className="explorer-count">{allFolders.length} folder{allFolders.length !== 1 ? 's' : ''}</span>
-       Ù]Ù]Ø[Û\Ë[ÝOOHÈ
-]Û\ÜÓ[YOH^Ü\Y[\H]Ý[O^ÞÈÛÚ^NÍ	ËX\Ú[ÝÛNÌL	È_O¼'åà»î#ÏÙ]ÈÛ\ÈXØÙ\ÜÚXH\KÜÚ\ÐYZ[	]ÛÛ\ÜÓ[YOH\[X\HÝ[O^ÞÛX\Ú[ÜÌL	ß_HÛÛXÚÏ^Ê
-HOÙ]ÚÝÐYÛ\YJ_OÜX]H\ÝÛ\Ø]ÛBÙ]
-H
-]Û\ÜÓ[YOHÛ\YÜYØ[Û\ËX\
-O
-Û\Ø\ÑÙ^O^ÙYHÛ\^ÙHÙXÝ[Û^ÜÙXÝ[ÛHÛÛXÚÏ^Ê
-HOÛÛ\ÛXÚÊ_HÏ
-J_BÚ\ÐYZ[	
-]ÛÛ\ÜÓ[YOHÛ\XØ\Û\XØ\YÚÜÝÛÛXÚÏ^Ê
-HOÙ]ÚÝÐYÛ\YJ_O]Ý[O^ÞÈÛÚ^NÌ	ËX\Ú[ÝÛNÎ	ËÛÛÜÝ\K]^[]]Y
-IÈ_OÏÙ]]Û\ÜÓ[YOHÛ\XØ\[[YHÝ[O^ÞÈÛÛÜÝ\K]^[]]Y
-IÈ_O]ÈÛ\Ù]Ø]Û
-_BÙ]
-_BÜÚÝÐYÛ\	YÛ\[Ù[ÙXÝ[Û^ÜÙXÝ[ÛHÛÛÜÙO^Ê
-HOÙ]ÚÝÐYÛ\[ÙJ_HÛY^Ú[S]ÑÛ\KÏBÂöFcà¢°¢Ð ¢òò)H)HdÄRu$B)H)H ¢6öç7BföÆFW"Ò7FfTföÆFW#°¢6öç7B6äVFDföÆFW"Ò6äVFB7W'&VçEW6W"æBÂföÆFW"æBÂ66W74ÖG&ÇÂ4FÖã°¢6öç7BfÆW2Ò²âââföÆFW"æfÆW2ÇÂµÒÂâââÆö6ÄfÆW5¶föÆFW"æEÒÇÂµÒÓ° ¢&WGW&â¢ÆFb6Æ74æÖSÒ&fÆRÖWÆ÷&W"#à¢ÆFb6Æ74æÖSÒ&WÆ÷&W"ÖVFW"#à¢ÆFb6Æ74æÖSÒ&WÆ÷&W"Ö'&VF7'VÖ"#à¢Æ'WGFöâ6Æ74æÖSÒ&'&VF7'VÖ"ÖÆæ²"öä6Æ6³×¶öä&6·Óà¢Ç7frvGFÒ#2"VvCÒ#2"fWt&÷Ò#BB"fÆÃÒ&æöæR"7GÆS×·¶Ö&vå&vC¢sGrÇfW'F6ÄÆvã¢vÖFFÆRw×Óà¢ÇFCÒ$Ó4ÃBãRtÃ"7G&ö¶SÒ&7W'&VçD6öÆ÷""7G&ö¶UvGFÒ#ãb"7G&ö¶TÆæV6Ò'&÷VæB"7G&ö¶TÆæV¦öãÒ'&÷VæB"óà¢Â÷7fsà¢·6V7FöâææÖWÐ¢Âö'WGFöãà¢Ç7â6Æ74æÖSÒ&WÆ÷&W"×6W#âòÂ÷7ãà¢Ç7â6Æ74æÖSÒ&WÆ÷&W"Ö7'VÖ"Ö7FfR#ç¶föÆFW"ææÖWÓÂ÷7ãà¢ÂöFcà¢ÆFb6Æ74æÖSÒ&WÆ÷&W"Ö7Föç2#à¢¶6äVFDföÆFW"bb¢Æ'WGFöâ6Æ74æÖSÒ&'Fâ'Fâ×&Ö''Fâ×6Ò"öä6Æ6³×²Óâ6WE6÷tFDfÆRG'VRÓà¢Ç7frvGFÒ#"VvCÒ#"fWt&÷Ò#"""fÆÃÒ&æöæR"7GÆS×·¶Ö&vå&vC¢sWw×Óà¢ÇFCÒ$ÓbcÓd"7G&ö¶SÒ&7W'&VçD6öÆ÷""7G&ö¶UvGFÒ#ãr"7G&ö¶TÆæV6Ò'&÷VæB"óà¢Â÷7fsà¢FBfÆP¢Âö'WGFöãà¢Ð¢ÂöFcà¢ÂöFcà ¢¶föÆFW"æFW62bb¢ÆFb6Æ74æÖSÒ&föÆFW"ÖFW62Ö&"#ç¶föÆFW"æFW67ÓÂöFcà¢Ð ¢¶fÆW2æÆVæwFÓÓÒò¢ÆFb6Æ74æÖSÒ&WÆ÷&W"ÖV×G#à¢ÆFb7GÆS×·²föçE6¦S¢sCrÂÖ&vä&÷GFöÓ¢s'r×Óï	ù8CÂöFcà¢ÇäæòfÆW2âF2föÆFW"WBãÂ÷à¢¶6äVFDföÆFW"bb¢Æ'WGFöâ6Æ74æÖSÒ&'Fâ'Fâ×&Ö'"7GÆS×·¶Ö&våF÷¢s'w×Òöä6Æ6³×²Óâ6WE6÷tFDfÆRG'VRÓà¢FBf'7BfÆP¢Âö'WGFöãà¢Ð¢ÂöFcà¢¢¢ÆFb6Æ74æÖSÒ&fÆRÖw&B#à¢¶fÆW2æÖfÆRÂÓâ¢ÆF`¢¶W×¶fÆRæBÇÂÐ¢6Æ74æÖSÒ&fÆRÖw&BÖ6&B ¢öä6Æ6³×²Óâ6WE6VÆV7FVDfÆRfÆRÐ¢à¢ÆFb6Æ74æÖSÒ&fÆRÖv2×F÷#à¢ÄfÆUGT6öâæÖS×¶fÆRææÖWÒ6¦S×³#GÒóà¢ÆFb6Æ74æÖSÒ&fÆRÖv2Ö'Fç2"öä6Æ6³×¶RÓâRç7F÷&÷vFöâÓà¢Æ'WGFöâ6Æ74æÖSÒ&fÆRÖ7FöâÖ'Fâ"FFÆSÒ%fWr"öä6Æ6³×²Óâ6WE6VÆV7FVDfÆRfÆRÓà¢Ç7frvGFÒ#2"VvCÒ#2"fWt&÷Ò#BB"fÆÃÒ&æöæR#à¢Æ6&6ÆR7Ò#r"7Ò#r"#Ò#"ãR"7G&ö¶SÒ&7W'&VçD6öÆ÷""7G&ö¶UvGFÒ#ã2"óà¢ÇFCÒ$Ót3r2ãR2r43ãR22r2t32rãRr32ãRru¢"7G&ö¶SÒ&7W'&VçD6öÆ÷""7G&ö¶UvGFÒ#ã2"óà¢Â÷7fsà¢Âö'WGFöãà¢Æ'WGFöâ6Æ74æÖSÒ&fÆRÖ7FöâÖ'Fâ"FFÆSÒ$F÷væÆöB#à¢Ç7frvGFÒ#2"VvCÒ#2"fWt&÷Ò#BB"fÆÃÒ&æöæR#à¢ÇFCÒ$ÓrcÓrÃBãRbãTÓrÃãRbãR"7G&ö¶SÒ&7W'&VçD6öÆ÷""7G&ö¶UvGFÒ#ã2"7G&ö¶TÆæV6Ò'&÷VæB"7G&ö¶TÆæV¦öãÒ'&÷VæB"óà¢ÇFCÒ$Ó"$""7G&ö¶SÒ&7W'&VçD6öÆ÷""7G&ö¶UvGFÒ#ã2"7G&ö¶TÆæV6Ò'&÷VæB"óà¢Â÷7fsà¢Âö'WGFöãà¢ÂöFcà¢ÂöFcà¢ÆFb6Æ74æÖSÒ&fÆRÖv2ÖæÖR#ç¶fÆRææÖWÓÂöFcà¢²fÆRçFw2ÇÂµÒæÆVæwFâbb¢ÆFb6Æ74æÖSÒ&fÆRÖv2×Fw2#à¢¶fÆRçFw2ç6Æ6RÂ2æÖBÓâÇ7â¶W×·GÒ6Æ74æÖSÒ&fÆR×Fr#â7·GÓÂ÷7ãâÐ¢ÂöFcà¢Ð¢ÆFb6Æ74æÖSÒ&fÆRÖv2ÖÖWF#à¢¶fÆRç6¦RbbfÆRç6¦RÓÒ~(	BrbbÇ7ãç¶fÆRç6¦WÓÂ÷7ãçÐ¢¶fÆRæÖöFfVBbbÇ7ãç¶fÆRæÖöFfVGÓÂ÷7ãçÐ¢ÂöFcà¢ÂöFcà¢Ð¢ÂöFcà¢Ð ¢·6÷tFDfÆRbb¢ÄFDfÆTÖöFÂföÆFW#×¶föÆFW'Ò6V7Föã×·6V7FöçÒöä6Æ÷6S×²Óâ6WE6÷tFDfÆRfÇ6RÒöäFC×¶æFÆTæWtfÆWÒóà¢Ð¢·6VÆV7FVDfÆRbb¢ÄfÆTFWFÄÖöFÀ¢fÆS×·6VÆV7FVDfÆWÒ6V7Föã×·6V7FöçÒföÆFW#×¶föÆFW'Ð¢6äVFDföÆFW#×¶6äVFDföÆFW'Òöä6Æ÷6S×²Óâ6WE6VÆV7FVDfÆRçVÆÂÐ¢óà¢Ð¢ÂöFcà¢°§Ð
+          </div>
+        </div>
+
+        {allFolders.length === 0 ? (
+          <div className="explorer-empty">
+            <div style={{ fontSize:'40px', marginBottom:'12px' }}>ðï¸</div>
+            <p>No folders accessible here.</p>
+            {isAdmin && <button className="btn btn-primary" style={{marginTop:'12px'}} onClick={() => setShowAddFolder(true)}>Create First Folder</button>}
+          </div>
+        ) : (
+          <div className="folder-grid">
+            {allFolders.map(f => (
+              <FolderCard3D key={f.id} folder={f} section={section} onClick={() => onFolderClick(f)} />
+            ))}
+            {isAdmin && (
+              <button className="folder-card folder-card-ghost" onClick={() => setShowAddFolder(true)}>
+                <div style={{ fontSize:'28px', marginBottom:'8px', color:'var(--text-muted)' }}>+</div>
+                <div className="folder-card-name" style={{ color:'var(--text-muted)' }}>New Folder</div>
+              </button>
+            )}
+          </div>
+        )}
+
+        {showAddFolder && <AddFolderModal section={section} onClose={() => setShowAddFolder(false)} onAdd={handleNewFolder}/>}
+      </div>
+    );
+  }
+
+  // ââ FILE GRID ââ
+  const folder = activeFolder;
+  const canEditFolder = canEdit(currentUser.id, folder.id, accessMatrix) || isAdmin;
+  const files = [...(folder.files || []), ...(localFiles[folder.id] || [])];
+
+  return (
+    <div className="file-explorer">
+      <div className="explorer-header">
+        <div className="explorer-breadcrumb">
+          <button className="breadcrumb-link" onClick={onBack}>
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{marginRight:'4px',verticalAlign:'middle'}}>
+              <path d="M9 3L4.5 7L9 11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            {section.name}
+          </button>
+          <span className="explorer-sep"> / </span>
+          <span className="explorer-crumb-active">{folder.name}</span>
+        </div>
+        <div className="explorer-actions">
+          {canEditFolder && (
+            <button className="btn btn-primary btn-sm" onClick={() => setShowAddFile(true)}>
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" style={{marginRight:'5px'}}>
+                <path d="M6 1V11M1 6H11" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
+              </svg>
+              Add File
+            </button>
+          )}
+        </div>
+      </div>
+
+      {folder.desc && (
+        <div className="folder-desc-bar">{folder.desc}</div>
+      )}
+
+      {files.length === 0 ? (
+        <div className="explorer-empty">
+          <div style={{ fontSize:'40px', marginBottom:'12px' }}>ð</div>
+          <p>No files in this folder yet.</p>
+          {canEditFolder && (
+            <button className="btn btn-primary" style={{marginTop:'12px'}} onClick={() => setShowAddFile(true)}>
+              Add First File
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="file-grid">
+          {files.map((file, i) => (
+            <div
+              key={file.id || i}
+              className="file-grid-card"
+              onClick={() => setSelectedFile(file)}
+            >
+              <div className="file-gc-top">
+                <FileTypeIcon name={file.name} size={24}/>
+                <div className="file-gc-btns" onClick={e => e.stopPropagation()}>
+                  <button className="file-action-btn" title="View" onClick={() => setSelectedFile(file)}>
+                    <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                      <circle cx="7" cy="7" r="2.5" stroke="currentColor" strokeWidth="1.3"/>
+                      <path d="M1 7C1 7 3.5 3 7 3C10.5 3 13 7 13 7C13 7 10.5 11 7 11C3.5 11 1 7 1 7Z" stroke="currentColor" strokeWidth="1.3"/>
+                    </svg>
+                  </button>
+                  <button className="file-action-btn" title="Download">
+                    <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                      <path d="M7 1V9M7 9L4.5 6.5M7 9L9.5 6.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M2 12H12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div className="file-gc-name">{file.name}</div>
+              {(file.tags || []).length > 0 && (
+                <div className="file-gc-tags">
+                  {file.tags.slice(0, 3).map(t => <span key={t} className="file-tag">#{t}</span>)}
+                </div>
+              )}
+              <div className="file-gc-meta">
+                {file.size && file.size !== 'â' && <span>{file.size}</span>}
+                {file.modified && <span>{file.modified}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {showAddFile && (
+        <AddFileModal folder={folder} section={section} onClose={() => setShowAddFile(false)} onAdd={handleNewFile}/>
+      )}
+      {selectedFile && (
+        <FileDetailModal
+          file={selectedFile} section={section} folder={folder}
+          canEditFolder={canEditFolder} onClose={() => setSelectedFile(null)}
+        />
+      )}
+    </div>
+  );
+}
