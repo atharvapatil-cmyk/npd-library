@@ -23,7 +23,7 @@ function ChatIcon() {
       <path d="M8 1C4.1 1 1 3.8 1 7.2c0 1.9.9 3.6 2.4 4.8L3 15l3.3-1.7c.5.1 1.1.2 1.7.2 3.9 0 7-2.8 7-6.3C15 3.8 11.9 1 8 1Z" stroke="currentColor" strokeWidth="1.4"/>
       <path d="M5 7H11M5 9.5H8.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
     </svg>
-  {;
+  );
 }
 
 export default function Header({
