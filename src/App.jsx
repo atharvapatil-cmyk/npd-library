@@ -9,20 +9,33 @@ import ChatPanel from './components/ChatPanel.jsx';
 import UploadModal from './components/UploadModal.jsx';
 import Settings from './components/Settings.jsx';
 
+const STORAGE_KEY_USERS = 'npd_extra_users';
+
+function loadExtraUsers() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY_USERS) || '[]');
+  } catch { return []; }
+}
+
+function saveExtraUsers(users) {
+  localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+}
+
 export default function App() {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [chatOpen, setChatOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
-  const [view, setView] = useState('dashboard');
-  const [activeSection, setActiveSection] = useState(null);
-  const [activeFolder, setActiveFolder] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showUpload, setShowUpload] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [accessMatrix, setAccessMatrix] = useState({});
-  const [recentUploads, setRecentUploads] = useState([]);
-  const [sections, setSections] = useState(FOLDER_TREE);
-  const [expandedSection, setExpandedSection] = useState(null);
+  const [currentUser,      setCurrentUser]      = useState(null);
+  const [chatOpen,         setChatOpen]         = useState(false);
+  const [darkMode,         setDarkMode]         = useState(false);
+  const [view,             setView]             = useState('dashboard');
+  const [activeSection,    setActiveSection]    = useState(null);
+  const [activeFolder,     setActiveFolder]     = useState(null);
+  const [searchQuery,      setSearchQuery]      = useState('');
+  const [showUpload,       setShowUpload]       = useState(false);
+  const [sidebarOpen,      setSidebarOpen]      = useState(true);
+  const [accessMatrix,     setAccessMatrix]     = useState({});
+  const [recentUploads,    setRecentUploads]    = useState([]);
+  const [sections,         setSections]         = useState(FOLDER_TREE);
+  const [expandedSection,  setExpandedSection]  = useState(null);
+  const [extraUsers,       setExtraUsers]       = useState(loadExtraUsers);
 
   useEffect(() => {
     if (currentUser) setAccessMatrix(getAccessMatrix());
@@ -75,8 +88,31 @@ export default function App() {
     });
   };
 
+  const handleAddUser = (newUser) => {
+    const updated = [...extraUsers.filter(u => u.id !== newUser.id), newUser];
+    setExtraUsers(updated);
+    saveExtraUsers(updated);
+    // Init their access matrix row
+    setAccessMatrix(prev => ({
+      ...prev,
+      [newUser.id]: prev[newUser.id] || {}
+    }));
+  };
+
+  const handleRemoveUser = (userId) => {
+    const updated = extraUsers.filter(u => u.id !== userId);
+    setExtraUsers(updated);
+    saveExtraUsers(updated);
+  };
+
   if (!currentUser) {
-    return <Login users={USERS} onLogin={setCurrentUser} />;
+    return (
+      <Login
+        users={USERS}
+        extraUsers={extraUsers}
+        onLogin={setCurrentUser}
+      />
+    );
   }
 
   return (
@@ -107,6 +143,8 @@ export default function App() {
           onDarkToggle={() => setDarkMode(d => !d)}
           onUpload={() => setShowUpload(true)}
           onNavigate={goToDashboard}
+          onAskLib={() => setChatOpen(o => !o)}
+          chatOpen={chatOpen}
         />
         <main className="main-content">
           {view === 'dashboard' && (
@@ -133,35 +171,19 @@ export default function App() {
           {view === 'settings' && (
             <Settings
               users={USERS}
+              extraUsers={extraUsers}
               sections={sections}
               accessMatrix={accessMatrix}
               onMatrixChange={setAccessMatrix}
               currentUser={currentUser}
               onAddSection={handleAddSection}
               onAddFolder={handleAddFolder}
+              onAddUser={handleAddUser}
+              onRemoveUser={handleRemoveUser}
             />
           )}
         </main>
       </div>
-
-      {/* Floating Chat Button - bottom left */}
-      <button
-        className={`chat-fab${chatOpen ? ' chat-fab-open' : ''}`}
-        onClick={() => setChatOpen(o => !o)}
-        title="Ask Lib â your Document Librarian"
-      >
-        {chatOpen ? (
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-            <path d="M2 2L16 16M16 2L2 16" stroke="white" strokeWidth="2.2" strokeLinecap="round"/>
-          </svg>
-        ) : (
-          <>
-            <span className="chat-fab-emoji">ð</span>
-            <span className="chat-fab-label">Ask Lib</span>
-            <span className="chat-fab-pulse"/>
-          </>
-        )}
-      </button>
 
       {chatOpen && (
         <ChatPanel
@@ -191,5 +213,5 @@ export default function App() {
         />
       )}
     </div>
-  );
-}
+  
+  }
