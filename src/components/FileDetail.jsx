@@ -22,14 +22,12 @@ export default function FileDetail({ file, user, users, onClose, onDelete, onTog
   return (
     <>
       <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.5)', backdropFilter:'blur(4px)', zIndex:150 }} />
-
       <div className="anim-slide-r" style={{
         position:'fixed', top:0, right:0, bottom:0, width:420,
         background:'var(--bg-card)', borderLeft:'1px solid var(--border)',
         zIndex:160, display:'flex', flexDirection:'column',
         boxShadow:'-12px 0 40px rgba(0,0,0,.15)',
       }}>
-        {/* Header */}
         <div style={{ padding:'20px 22px', borderBottom:'1px solid var(--border)', borderTop:`4px solid ${color}` }}>
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:12 }}>
             <div style={{ display:'flex', gap:12, alignItems:'flex-start', flex:1 }}>
@@ -44,20 +42,15 @@ export default function FileDetail({ file, user, users, onClose, onDelete, onTog
               </div>
             </div>
             <button onClick={onClose} style={{ width:30, height:30, borderRadius:8, border:'1px solid var(--border)', background:'var(--bg-surface)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, color:'var(--text-muted)' }}>
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                <path d="M1 1L9 9M9 1L1 9" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
-              </svg>
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 1L9 9M9 1L1 9" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>
             </button>
           </div>
         </div>
-
-        {/* Scrollable body */}
         <div style={{ flex:1, overflowY:'auto', padding:'20px 22px' }}>
           <div style={{ marginBottom:20 }}>
             <div style={{ fontSize:11, fontWeight:700, color:'var(--text-muted)', letterSpacing:'.7px', textTransform:'uppercase', marginBottom:8 }}>Description</div>
             <p style={{ fontSize:13, color:'var(--text-secondary)', lineHeight:1.6, margin:0 }}>{file.desc}</p>
           </div>
-
           {file.tags.length > 0 && (
             <div style={{ marginBottom:20 }}>
               <div style={{ fontSize:11, fontWeight:700, color:'var(--text-muted)', letterSpacing:'.7px', textTransform:'uppercase', marginBottom:8 }}>Tags</div>
@@ -68,7 +61,6 @@ export default function FileDetail({ file, user, users, onClose, onDelete, onTog
               </div>
             </div>
           )}
-
           <div style={{ marginBottom:20, padding:14, borderRadius:12, background:'var(--bg-surface)', border:'1px solid var(--border)' }}>
             <div style={{ fontSize:11, fontWeight:700, color:'var(--text-muted)', letterSpacing:'.7px', textTransform:'uppercase', marginBottom:10 }}>Location</div>
             <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:13 }}>
@@ -78,7 +70,6 @@ export default function FileDetail({ file, user, users, onClose, onDelete, onTog
               <span style={{ color:'var(--text-primary)', fontWeight:700 }}>{folder?.name}</span>
             </div>
           </div>
-
           <div style={{ marginBottom:20 }}>
             <div style={{ fontSize:11, fontWeight:700, color:'var(--text-muted)', letterSpacing:'.7px', textTransform:'uppercase', marginBottom:10 }}>Uploaded By</div>
             <div style={{ display:'flex', alignItems:'center', gap:12, padding:14, borderRadius:12, background:'var(--bg-surface)', border:'1px solid var(--border)' }}>
@@ -94,7 +85,6 @@ export default function FileDetail({ file, user, users, onClose, onDelete, onTog
               </div>
             </div>
           </div>
-
           <div style={{ marginBottom:20 }}>
             <div style={{ fontSize:11, fontWeight:700, color:'var(--text-muted)', letterSpacing:'.7px', textTransform:'uppercase', marginBottom:10 }}>Access Control</div>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
@@ -112,7 +102,6 @@ export default function FileDetail({ file, user, users, onClose, onDelete, onTog
               </div>
             </div>
           </div>
-
           <div style={{ marginBottom:20 }}>
             <div style={{ fontSize:11, fontWeight:700, color:'var(--text-muted)', letterSpacing:'.7px', textTransform:'uppercase', marginBottom:10 }}>Version History</div>
             <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
@@ -129,8 +118,6 @@ export default function FileDetail({ file, user, users, onClose, onDelete, onTog
             </div>
           </div>
         </div>
-
-        {/* Actions */}
         <div style={{ padding:'16px 22px', borderTop:'1px solid var(--border)', display:'flex', gap:8 }}>
           <button onClick={() => onToggleStar(file.id)}
             style={{ flex:1, padding:'10px', borderRadius:10, border:'1px solid var(--border)', background:'var(--bg-surface)', cursor:'pointer', fontSize:14, fontWeight:700, color: file.starred ? '#f59e0b' : 'var(--text-muted)', transition:'all .15s' }}>
