@@ -53,13 +53,21 @@ function FolderCard3D({ folder, section, onClick }) {
         </svg>
       </div>
       <div className="folder-card-name">{folder.name}</div>
-      <div className="folder-card-desc">{folder.desc ? folder.desc.slice(0,55) + (folder.desc.length > 55 ? 'â¦' : '') : ''}</div>
+      <div className="folder-card-desc">{folder.desc ? folder.desc.slice(0,55) + (folder.desc.length > 55 ? '...' : '') : ''}</div>
       <div className="folder-card-footer">
         <span className="folder-file-pill" style={{ background: color+'18', color }}>
           {fileCount} file{fileCount !== 1 ? 's' : ''}
         </span>
       </div>
     </button>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+      <path d="M1 1L9 9M9 1L1 9" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
+    </svg>
   );
 }
 
@@ -76,7 +84,7 @@ function AddFileModal({ folder, section, onClose, onAdd }) {
       id: 'f' + Date.now(),
       name: name.trim().endsWith('.' + type) ? name.trim() : name.trim() + '.' + type,
       type,
-      size: 'â',
+      size: '--',
       modified: new Date().toISOString().slice(0, 10),
       tags: tags.split(',').map(t => t.trim()).filter(Boolean),
     });
@@ -88,10 +96,10 @@ function AddFileModal({ folder, section, onClose, onAdd }) {
       <div className="modal-box" onClick={e => e.stopPropagation()}>
         <div className="modal-hd">
           <div className="modal-title">
-            <span style={{marginRight:'8px'}}>â</span> Add File
-            <span className="modal-title-sub"> Â· {folder?.name}</span>
+            <span style={{marginRight:'8px', fontSize:'16px'}}>+</span> Add File
+            <span className="modal-title-sub"> &middot; {folder?.name}</span>
           </div>
-          <button className="modal-x" onClick={onClose}>â</button>
+          <button className="modal-x" onClick={onClose}><CloseIcon /></button>
         </div>
         <form onSubmit={submit} className="modal-body">
           <label className="modal-label">File Name</label>
@@ -123,8 +131,12 @@ function AddFileModal({ folder, section, onClose, onAdd }) {
             <input ref={fileRef} type="file" hidden onChange={e => {
               if (e.target.files[0]) setName(e.target.files[0].name.replace(/\.[^.]+$/, ''));
             }}/>
-            <div style={{ fontSize:'28px', marginBottom:'6px' }}>ð</div>
-            <div className="modal-dropzone-text">Click to browse or drag & drop a file</div>
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" style={{marginBottom:'8px'}}>
+              <rect x="4" y="2" width="18" height="24" rx="2" fill="#e5e7eb" stroke="#9ca3af" strokeWidth="1.5"/>
+              <path d="M14 2V9H22" stroke="#9ca3af" strokeWidth="1.5" strokeLinejoin="round"/>
+              <path d="M8 14H18M8 18H14" stroke="#9ca3af" strokeWidth="1.2" strokeLinecap="round"/>
+            </svg>
+            <div className="modal-dropzone-text">Click to browse or drag &amp; drop a file</div>
             <div className="modal-dropzone-sub">File name will be auto-filled</div>
           </div>
 
@@ -155,8 +167,13 @@ function AddFolderModal({ section, onClose, onAdd }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" onClick={e => e.stopPropagation()}>
         <div className="modal-hd">
-          <div className="modal-title">ð New Folder <span className="modal-title-sub">Â· {section?.name}</span></div>
-          <button className="modal-x" onClick={onClose}>â</button>
+          <div className="modal-title">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" style={{marginRight:'7px',verticalAlign:'middle'}}>
+              <path d="M1.5 4C1.5 3.2 2.2 2.5 3 2.5H7L8.5 4H13C13.8 4 14.5 4.7 14.5 5.5V12C14.5 12.8 13.8 13.5 13 13.5H3C2.2 13.5 1.5 12.8 1.5 12V4Z" stroke="currentColor" strokeWidth="1.3"/>
+            </svg>
+            New Folder <span className="modal-title-sub">&middot; {section?.name}</span>
+          </div>
+          <button className="modal-x" onClick={onClose}><CloseIcon /></button>
         </div>
         <form onSubmit={submit} className="modal-body">
           <label className="modal-label">Folder Name</label>
@@ -182,7 +199,7 @@ function FileDetailModal({ file, section, folder, canEditFolder, onClose }) {
             <FileTypeIcon name={file.name} size={18}/>
             <span style={{ fontSize:'14px' }}>{file.name}</span>
           </div>
-          <button className="modal-x" onClick={onClose}>â</button>
+          <button className="modal-x" onClick={onClose}><CloseIcon /></button>
         </div>
         <div className="modal-body">
           <div className="file-detail-grid">
@@ -207,8 +224,8 @@ function FileDetailModal({ file, section, folder, canEditFolder, onClose }) {
             )}
           </div>
           <div className="modal-actions" style={{ marginTop:'20px' }}>
-            <button className="btn btn-primary">ð Open File</button>
-            {canEditFolder && <button className="btn btn-ghost">â¬ Download</button>}
+            <button className="btn btn-primary">Open File</button>
+            {canEditFolder && <button className="btn btn-ghost">Download</button>}
           </div>
         </div>
       </div>
@@ -229,8 +246,10 @@ export default function FileExplorer({
   if (!section) {
     return (
       <div className="explorer-empty">
-        <div style={{ fontSize:'52px', marginBottom:'14px' }}>ð</div>
-        <p>Pick a section from the sidebar to start browsing.</p>
+        <svg width="52" height="52" viewBox="0 0 52 52" fill="none" style={{marginBottom:'14px',opacity:0.4}}>
+          <path d="M6 14C6 11.8 7.8 10 10 10H22L27 14H44C46.2 14 48 15.8 48 18V40C48 42.2 46.2 44 44 44H10C7.8 44 6 42.2 6 40V14Z" stroke="#9ca3af" strokeWidth="2"/>
+        </svg>
+        <p>Pick a section from the nav to start browsing.</p>
       </div>
     );
   }
@@ -251,7 +270,6 @@ export default function FileExplorer({
     setLocalFiles(p => ({ ...p, [activeFolder.id]: [...(p[activeFolder.id] || []), f] }));
   };
 
-  // ââ FOLDER GRID ââ
   if (!activeFolder) {
     return (
       <div className="file-explorer">
@@ -276,7 +294,9 @@ export default function FileExplorer({
 
         {allFolders.length === 0 ? (
           <div className="explorer-empty">
-            <div style={{ fontSize:'40px', marginBottom:'12px' }}>ðï¸</div>
+            <svg width="48" height="48" viewBox="0 0 52 52" fill="none" style={{marginBottom:'12px',opacity:0.35}}>
+              <path d="M6 14C6 11.8 7.8 10 10 10H22L27 14H44C46.2 14 48 15.8 48 18V40C48 42.2 46.2 44 44 44H10C7.8 44 6 42.2 6 40V14Z" stroke="#9ca3af" strokeWidth="2"/>
+            </svg>
             <p>No folders accessible here.</p>
             {isAdmin && <button className="btn btn-primary" style={{marginTop:'12px'}} onClick={() => setShowAddFolder(true)}>Create First Folder</button>}
           </div>
@@ -299,7 +319,6 @@ export default function FileExplorer({
     );
   }
 
-  // ââ FILE GRID ââ
   const folder = activeFolder;
   const canEditFolder = canEdit(currentUser.id, folder.id, accessMatrix) || isAdmin;
   const files = [...(folder.files || []), ...(localFiles[folder.id] || [])];
@@ -335,7 +354,10 @@ export default function FileExplorer({
 
       {files.length === 0 ? (
         <div className="explorer-empty">
-          <div style={{ fontSize:'40px', marginBottom:'12px' }}>ð</div>
+          <svg width="44" height="44" viewBox="0 0 44 52" fill="none" style={{marginBottom:'12px',opacity:0.35}}>
+            <path d="M5 5C5 3.3 6.3 2 8 2H28L40 14V46C40 47.7 38.7 49 37 49H8C6.3 49 5 47.7 5 46V5Z" stroke="#9ca3af" strokeWidth="2"/>
+            <path d="M28 2V14H40" stroke="#9ca3af" strokeWidth="2" strokeLinejoin="round"/>
+          </svg>
           <p>No files in this folder yet.</p>
           {canEditFolder && (
             <button className="btn btn-primary" style={{marginTop:'12px'}} onClick={() => setShowAddFile(true)}>
@@ -375,7 +397,7 @@ export default function FileExplorer({
                 </div>
               )}
               <div className="file-gc-meta">
-                {file.size && file.size !== 'â' && <span>{file.size}</span>}
+                {file.size && file.size !== '--' && <span>{file.size}</span>}
                 {file.modified && <span>{file.modified}</span>}
               </div>
             </div>
