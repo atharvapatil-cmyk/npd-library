@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { USERS, FOLDER_TREE, getAccessMatrix } from './data/data.js';
 import Login from './components/Login.jsx';
-import Header from './components/Header.jsx';
-import Sidebar from './components/Sidebar.jsx';
+import TopNav from './components/TopNav.jsx';
 import Dashboard from './components/Dashboard.jsx';
 import FileExplorer from './components/FileExplorer.jsx';
 import ChatPanel from './components/ChatPanel.jsx';
@@ -12,30 +11,27 @@ import Settings from './components/Settings.jsx';
 const STORAGE_KEY_USERS = 'npd_extra_users';
 
 function loadExtraUsers() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY_USERS) || '[]');
-  } catch { return []; }
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY_USERS) || '[]'); }
+  catch { return []; }
 }
-
 function saveExtraUsers(users) {
   localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
 }
 
 export default function App() {
-  const [currentUser,      setCurrentUser]      = useState(null);
-  const [chatOpen,         setChatOpen]         = useState(false);
-  const [darkMode,         setDarkMode]         = useState(false);
-  const [view,             setView]             = useState('dashboard');
-  const [activeSection,    setActiveSection]    = useState(null);
-  const [activeFolder,     setActiveFolder]     = useState(null);
-  const [searchQuery,      setSearchQuery]      = useState('');
-  const [showUpload,       setShowUpload]       = useState(false);
-  const [sidebarOpen,      setSidebarOpen]      = useState(true);
-  const [accessMatrix,     setAccessMatrix]     = useState({});
-  const [recentUploads,    setRecentUploads]    = useState([]);
-  const [sections,         setSections]         = useState(FOLDER_TREE);
-  const [expandedSection,  setExpandedSection]  = useState(null);
-  const [extraUsers,       setExtraUsers]       = useState(loadExtraUsers);
+  const [currentUser,     setCurrentUser]     = useState(null);
+  const [chatOpen,        setChatOpen]        = useState(false);
+  const [darkMode,        setDarkMode]        = useState(false);
+  const [view,            setView]            = useState('dashboard');
+  const [activeSection,   setActiveSection]   = useState(null);
+  const [activeFolder,    setActiveFolder]    = useState(null);
+  const [searchQuery,     setSearchQuery]     = useState('');
+  const [showUpload,      setShowUpload]      = useState(false);
+  const [accessMatrix,    setAccessMatrix]    = useState({});
+  const [recentUploads,   setRecentUploads]   = useState([]);
+  const [sections,        setSections]        = useState(FOLDER_TREE);
+  const [expandedSection, setExpandedSection] = useState(null);
+  const [extraUsers,      setExtraUsers]      = useState(loadExtraUsers);
 
   useEffect(() => {
     if (currentUser) setAccessMatrix(getAccessMatrix());
@@ -92,10 +88,9 @@ export default function App() {
     const updated = [...extraUsers.filter(u => u.id !== newUser.id), newUser];
     setExtraUsers(updated);
     saveExtraUsers(updated);
-    // Init their access matrix row
     setAccessMatrix(prev => ({
       ...prev,
-      [newUser.id]: prev[newUser.id] || {}
+      [newUser.id]: prev[newUser.id] || {},
     }));
   };
 
@@ -116,8 +111,9 @@ export default function App() {
   }
 
   return (
-    <div className={`app-layout${sidebarOpen ? '' : ' sidebar-collapsed'}`}>
-      <Sidebar
+    <div className="app-layout-col">
+      {/* ââ Horizontal top navigation bar ââ */}
+      <TopNav
         currentUser={currentUser}
         sections={sections}
         accessMatrix={accessMatrix}
@@ -125,66 +121,60 @@ export default function App() {
         activeFolder={activeFolder}
         expandedSection={expandedSection}
         view={view}
+        darkMode={darkMode}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        chatOpen={chatOpen}
         onSectionClick={handleSidebarSectionClick}
         onFolderClick={handleSidebarFolderClick}
         onDashboard={goToDashboard}
         onSettings={() => setView('settings')}
+        onDarkToggle={() => setDarkMode(d => !d)}
+        onUpload={() => setShowUpload(true)}
+        onAskLib={() => setChatOpen(o => !o)}
+        onLogout={() => setCurrentUser(null)}
       />
-      <div className="main-area">
-        <Header
-          currentUser={currentUser}
-          view={view}
-          activeSection={activeSection}
-          activeFolder={activeFolder}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onToggleSidebar={() => setSidebarOpen(o => !o)}
-          darkMode={darkMode}
-          onDarkToggle={() => setDarkMode(d => !d)}
-          onUpload={() => setShowUpload(true)}
-          onNavigate={goToDashboard}
-          onAskLib={() => setChatOpen(o => !o)}
-          chatOpen={chatOpen}
-        />
-        <main className="main-content">
-          {view === 'dashboard' && (
-            <Dashboard
-              currentUser={currentUser}
-              sections={sections}
-              accessMatrix={accessMatrix}
-              recentUploads={recentUploads}
-              onSectionClick={handleSidebarSectionClick}
-            />
-          )}
-          {view === 'section' && (
-            <FileExplorer
-              section={activeSection}
-              sections={sections}
-              currentUser={currentUser}
-              accessMatrix={accessMatrix}
-              activeFolder={activeFolder}
-              onFolderClick={setActiveFolder}
-              onBack={() => setActiveFolder(null)}
-              onAddFolder={(f) => activeSection && handleAddFolder(activeSection.id, f)}
-            />
-          )}
-          {view === 'settings' && (
-            <Settings
-              users={USERS}
-              extraUsers={extraUsers}
-              sections={sections}
-              accessMatrix={accessMatrix}
-              onMatrixChange={setAccessMatrix}
-              currentUser={currentUser}
-              onAddSection={handleAddSection}
-              onAddFolder={handleAddFolder}
-              onAddUser={handleAddUser}
-              onRemoveUser={handleRemoveUser}
-            />
-          )}
-        </main>
-      </div>
 
+      {/* ââ Main content area ââ */}
+      <main className="main-content-full">
+        {view === 'dashboard' && (
+          <Dashboard
+            currentUser={currentUser}
+            sections={sections}
+            accessMatrix={accessMatrix}
+            recentUploads={recentUploads}
+            onSectionClick={handleSidebarSectionClick}
+          />
+        )}
+        {view === 'section' && (
+          <FileExplorer
+            section={activeSection}
+            sections={sections}
+            currentUser={currentUser}
+            accessMatrix={accessMatrix}
+            activeFolder={activeFolder}
+            onFolderClick={setActiveFolder}
+            onBack={() => setActiveFolder(null)}
+            onAddFolder={(f) => activeSection && handleAddFolder(activeSection.id, f)}
+          />
+        )}
+        {view === 'settings' && (
+          <Settings
+            users={USERS}
+            extraUsers={extraUsers}
+            sections={sections}
+            accessMatrix={accessMatrix}
+            onMatrixChange={setAccessMatrix}
+            currentUser={currentUser}
+            onAddSection={handleAddSection}
+            onAddFolder={handleAddFolder}
+            onAddUser={handleAddUser}
+            onRemoveUser={handleRemoveUser}
+          />
+        )}
+      </main>
+
+      {/* ââ Chat panel (positioned top-right below nav) ââ */}
       {chatOpen && (
         <ChatPanel
           onClose={() => setChatOpen(false)}
@@ -194,6 +184,7 @@ export default function App() {
         />
       )}
 
+      {/* ââ Upload modal ââ */}
       {showUpload && (
         <UploadModal
           sections={sections}
